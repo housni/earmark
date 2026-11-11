@@ -1,0 +1,24 @@
+# Dependencies and build output
+node_modules/
+main.js
+*.map
+
+# Obsidian plugin settings (created when installed in a vault)
+data.json
+
+# Claude Code: commit CLAUDE.md, .claude/settings.json and .claude/plans/;
+# keep personal and machine-specific files out.
+.claude/settings.local.json
+.claude/*.local.*
+.claude/todos/
+.claude/shell-snapshots/
+.claude/statsig/
+.claude/projects/
+*.jsonl
+CLAUDE.local.md
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp

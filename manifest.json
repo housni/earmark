@@ -1,0 +1,9 @@
+{
+  "id": "earmark",
+  "name": "Earmark",
+  "version": "0.1.0",
+  "minAppVersion": "1.4.0",
+  "description": "Keep a catalog of budget items, build budgets from it, and track spending, credits and balances.",
+  "author": "Housni Yakoob",
+  "isDesktopOnly": false
+}
