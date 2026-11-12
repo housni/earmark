@@ -61,7 +61,7 @@ export function renderCatalog(plugin: BudgetPlugin, source: string, el: HTMLElem
 
 	const add = filterBar.toolbar.createEl("button", { cls: "mod-cta", text: "Add item" });
 	add.addEventListener("click", () =>
-		new ItemModal(plugin.app, settings, null, (fields) => save((c) => {
+		new ItemModal(plugin.app, settings, null, (fields) => void save((c) => {
 			const at = now();
 			c.items.push({ id: newId(), ...fields, created: at, modified: at });
 		})).open(),
@@ -100,11 +100,9 @@ export function renderCatalog(plugin: BudgetPlugin, source: string, el: HTMLElem
 		}
 		for (const item of rows) {
 			const tr = body.createEl("tr");
-			const name = tr.createEl("td", { text: item.name });
-			if (item.description) {
-				name.title = item.description;
-				name.addClass("budget-has-desc");
-			}
+			const name = tr.createEl("td");
+			if (item.description) name.createSpan({ cls: "budget-has-desc", text: item.name, attr: { title: item.description } });
+			else name.setText(item.name);
 			tr.createEl("td", {
 				cls: "budget-num",
 				text: formatMoney(item.amount, item.currency || settings.baseCurrency, settings.locale),
@@ -122,7 +120,7 @@ export function renderCatalog(plugin: BudgetPlugin, source: string, el: HTMLElem
 			const actions = tr.createEl("td", { cls: "budget-actions" });
 			iconButton(actions, "pencil", "Edit", () =>
 				new ItemModal(plugin.app, settings, item, (fields) =>
-					save((c) => {
+					void save((c) => {
 						const i = find(c, item.id);
 						c.items[i] = { ...c.items[i], ...fields, modified: now() };
 					}),
@@ -130,7 +128,7 @@ export function renderCatalog(plugin: BudgetPlugin, source: string, el: HTMLElem
 			);
 			iconButton(actions, "trash", "Delete", () =>
 				new ConfirmModal(plugin.app, `Delete “${item.name}” from the catalog? Budgets keep their copy.`, "Delete", () =>
-					save((c) => {
+					void save((c) => {
 						c.items.splice(find(c, item.id), 1);
 					}),
 				).open(),

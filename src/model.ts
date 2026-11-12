@@ -42,7 +42,9 @@ function list(v: unknown, field: string): unknown[] {
 function str(v: unknown): string {
 	if (v === undefined || v === null) return "";
 	if (v instanceof Date) return v.toISOString().slice(0, 10);
-	return String(v).trim();
+	if (typeof v === "string") return v.trim();
+	if (typeof v === "number" || typeof v === "boolean" || typeof v === "bigint") return String(v);
+	return "";
 }
 
 export function num(v: unknown): number {

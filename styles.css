@@ -91,9 +91,6 @@
 }
 
 /* Filters */
-.budget-hidden {
-	display: none !important;
-}
 
 .budget-filterbar {
 	margin-bottom: var(--size-4-3);
@@ -236,8 +233,7 @@
 }
 
 .budget-has-desc {
-	text-decoration: underline dotted var(--text-faint);
-	text-underline-offset: 3px;
+	border-bottom: 1px dotted var(--text-faint);
 	cursor: help;
 }
 
@@ -287,13 +283,14 @@
 	background: var(--budget-over-fill);
 }
 
-.budget-subrow > td {
+/* Same specificity as ".budget-plugin .budget-table td" and later, so these win. */
+.budget-plugin .budget-subrow > td {
 	background: var(--background-secondary);
-	padding-left: var(--size-4-8) !important;
+	padding-left: var(--size-4-8);
 }
 
-.budget-log td {
-	border-bottom: none !important;
+.budget-plugin .budget-log td {
+	border-bottom: none;
 }
 
 .budget-tag {

@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 
 jobs:
   release:
@@ -34,13 +36,13 @@ jobs:
             exit 1
           fi
 
-      - name: Package
-        env:
-          TAG: ${{ github.ref_name }}
-        run: |
-          mkdir earmark
-          cp main.js manifest.json styles.css earmark/
-          zip -r "earmark-$TAG.zip" earmark
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
 
       - name: Publish release
         env:
@@ -50,4 +52,4 @@ jobs:
           gh release create "$TAG" \
             --title "$TAG" \
             --generate-notes \
-            main.js manifest.json styles.css "earmark-$TAG.zip"
+            main.js manifest.json styles.css
