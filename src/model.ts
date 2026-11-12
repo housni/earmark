@@ -7,6 +7,7 @@ import type {
 	Credit,
 	ItemFields,
 	ItemFilter,
+	ItemStatus,
 	Stamps,
 	Transaction,
 } from "./types";
@@ -200,32 +201,19 @@ export function rebaseRates(
 	return out;
 }
 
-export function matchesFilter(item: ItemFields, f: ItemFilter): boolean {
-	if (f.category && item.category !== f.category) return false;
-	if (f.account && item.account !== f.account) return false;
-	if (f.tag && !item.tags.includes(f.tag)) return false;
-	if (f.search) {
-		const q = f.search.toLowerCase();
-		const hay = [item.name, item.description, item.manager, item.category, item.account, ...item.tags]
-			.join(" ")
-			.toLowerCase();
-		if (!hay.includes(q)) return false;
-	}
-	return true;
-}
-
 export type SortKey =
 	| "name" | "amount" | "currency" | "frequency" | "account" | "category" | "priority" | "tags" | "manager"
 	| "created" | "modified" | "spent" | "balance";
 
-type Sortable = ItemFields & Stamps & { transactions?: Transaction[] };
+/** Anything shown in an item table: catalog items, or budget items with their spending. */
+export type ListItem = ItemFields & Stamps & { transactions?: Transaction[] };
 
-function spentSum(item: Sortable): number {
+function spentSum(item: ListItem): number {
 	return (item.transactions ?? []).reduce((sum, t) => sum + t.amount, 0);
 }
 
 /** Sort value, or null for a blank (blanks always sort last). */
-function sortValue(item: Sortable, key: SortKey, priorities: string[]): string | number | null {
+function sortValue(item: ListItem, key: SortKey, priorities: string[]): string | number | null {
 	switch (key) {
 		case "amount":
 			return item.amount;
@@ -248,7 +236,7 @@ function sortValue(item: Sortable, key: SortKey, priorities: string[]): string |
  * Sorted copy. Priority follows the order in settings (highest first);
  * blanks sort last in both directions; an empty key keeps the original order.
  */
-export function sortItems<T extends Sortable>(items: T[], key: SortKey | "", dir: 1 | -1, priorities: string[]): T[] {
+export function sortItems<T extends ListItem>(items: T[], key: SortKey | "", dir: 1 | -1, priorities: string[]): T[] {
 	if (!key) return [...items];
 	return [...items].sort((a, b) => {
 		const av = sortValue(a, key, priorities);
@@ -259,6 +247,54 @@ export function sortItems<T extends Sortable>(items: T[], key: SortKey | "", dir
 			: String(av).localeCompare(String(bv), undefined, { numeric: true });
 		return c * dir;
 	});
+}
+
+export function emptyFilter(): ItemFilter {
+	return {
+		search: "", category: "", account: "", tag: "", frequency: "", priority: "", manager: "", currency: "",
+		amountMin: "", amountMax: "", createdFrom: "", createdTo: "", modifiedFrom: "", modifiedTo: "", status: "",
+	};
+}
+
+/** Number of filters set, not counting the search text. */
+export function activeFilterCount(f: ItemFilter): number {
+	return (Object.keys(f) as (keyof ItemFilter)[]).filter((k) => k !== "search" && f[k] !== "").length;
+}
+
+export function isFiltered(f: ItemFilter): boolean {
+	return f.search.trim() !== "" || activeFilterCount(f) > 0;
+}
+
+export function itemStatus(item: ListItem): ItemStatus {
+	const spent = spentSum(item);
+	if (spent === 0) return "not-started";
+	if (Math.abs(spent - item.amount) < 0.005) return "spent";
+	return spent > item.amount ? "over" : "in-progress";
+}
+
+function inDateRange(stamp: string, from: string, to: string): boolean {
+	if (!from && !to) return true;
+	const d = stampDate(stamp);
+	return d !== "" && (!from || d >= from) && (!to || d <= to);
+}
+
+export function matchesFilter(item: ListItem, f: ItemFilter): boolean {
+	const fields = ["category", "account", "frequency", "priority", "manager", "currency"] as const;
+	if (fields.some((k) => f[k] && item[k] !== f[k])) return false;
+	if (f.tag && !item.tags.includes(f.tag)) return false;
+	if (f.amountMin.trim() && item.amount < num(f.amountMin)) return false;
+	if (f.amountMax.trim() && item.amount > num(f.amountMax)) return false;
+	if (!inDateRange(item.created, f.createdFrom, f.createdTo)) return false;
+	if (!inDateRange(item.modified, f.modifiedFrom, f.modifiedTo)) return false;
+	if (f.status && itemStatus(item) !== f.status) return false;
+	const q = f.search.trim().toLowerCase();
+	if (q) {
+		const hay = [item.name, item.description, item.manager, item.category, item.account, ...item.tags]
+			.join(" ")
+			.toLowerCase();
+		if (!hay.includes(q)) return false;
+	}
+	return true;
 }
 
 export function distinct(values: string[]): string[] {

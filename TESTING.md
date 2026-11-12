@@ -90,14 +90,18 @@ How numbers are displayed (symbols, separators) depends on your system locale, o
    - the description shows as a dotted underline on the name, with a tooltip on hover
    - saving an item with no name is blocked with a notice
 3. **Sorting**: click the *Amount* header. Rows sort by amount and a ▲ appears; click again for ▼. Sorting by *Priority* follows the order in settings (High first).
-4. **Filtering**: try the category, account and tag dropdowns, and type in search. Matching works on name, description, manager, category, account and tags. The footer reads "N of 3 items".
+4. **Filtering**:
+   - Type in **Search**. It matches name, description, manager, category, account and tags, ignoring case.
+   - Click **Filters** to open the panel. It has a dropdown for each field you've used (category, account, tag, frequency, priority, manager, currency), plus ranges for amount, created and modified.
+   - Set one or two filters. The button reads **Filters (n)** and the footer reads "N of 3 items".
+   - **Clear** resets everything, including the search. A filter that matches nothing shows "No items match the filters."
 5. **Edit**: use the pencil on *Vet* to change the amount to 15500, then back to 15000. **Delete**: use the trash icon on a throwaway item. A confirmation appears before anything is removed.
 6. Switch to Source mode. The block is YAML, and each item has an `id`.
 
 ### 4.2 Create a budget
 1. In **Settings → Earmark → Budget title format**, try `YYYYMMDD`. The "Today:" sample under the setting updates as you type, for example `20261112`. Clear the box: the sample shows the default format, `2026-11 November`. Leave it empty or set it back to `YYYY-MM MMMM`.
 2. Run **Earmark: New budget**. The suggested title follows the format, for example `2026-11 November`. Accept it, or type your own.
-3. In the picker, check that you can filter and use **Select visible**. The submit button counts selected items ("Add 3 items"). Select all three and confirm.
+3. In the picker, check that you can search and use the same **Filters** panel, and that **Select visible** selects only what's shown. The submit button counts selected items ("Add 3 items"). Select all three and confirm.
    - You should see `Budgets/<title>.md` created and opened.
    - It has a header with the title, a base-currency dropdown, and the buttons **Open catalog**, **Add from catalog**, **Add custom item** and **Refresh from catalog**.
    - **Open catalog** opens the catalog note, the same as the command does. Go back to the budget afterwards.
@@ -177,7 +181,20 @@ Both tables have **Created** and **Modified** columns. They show the local date;
 5. Click the **Created** or **Modified** header to sort. Items without dates stay at the bottom whether you sort ascending (▲) or descending (▼).
 6. In Source mode, each item has `created:` and `modified:` lines with ISO timestamps, e.g. `2026-11-12T13:40:00.000Z`.
 
-### 4.10 Edge cases
+### 4.10 Sorting and filtering a budget
+1. **Sorting**: click any of the budget table's headers except the chevron, progress and action columns. The first click sorts ascending ▲, the second descending ▼, and the third returns to the budget's own order.
+   - *Priority* follows the order in settings.
+   - *Spent* and *Balance* sort by the current figures. Overspent items have negative balances, so they come first in ascending order.
+2. **Filtering**: the budget has the same search and **Filters** panel as the catalog, plus **Status**: *Not started*, *In progress*, *Fully spent* or *Overspent*. With the 4.4 data:
+   - *Overspent* shows only Vet.
+   - *Fully spent* shows only Rent.
+3. **Filtered totals**: filter to category *Housing*. A note appears above the cards: "Filtered: 1 of 3 items…".
+   - *Total cost*, *Spent* and *To be spent* now cover Rent only.
+   - *Credits* and *Surplus/Shortfall* still cover the whole budget.
+   - **Clear filters** in the note resets everything.
+4. Filters and sorting stay in place after you log spending or edit an item, while the note is open.
+
+### 4.11 Edge cases
 - **Reading view and Live Preview**: repeat a couple of actions in each. Both views should behave the same.
 - **Callouts and lists**: put a ```` ```budget ```` block inside a `> [!note]` callout, or indent it under a list item. Saves keep the `> ` or indent prefix on every line.
 - **Two budgets in one note**: their buttons each edit their own block. The command **Earmark: Add items from catalog to current budget** says the note has several budgets and asks you to use the button instead.

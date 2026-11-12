@@ -1,12 +1,13 @@
 import { App, Modal } from "obsidian";
 import { formatMoney } from "../money";
-import { distinct, matchesFilter } from "../model";
+import { matchesFilter } from "../model";
 import type { BudgetSettings } from "../config";
-import type { CatalogItem, ItemFilter } from "../types";
+import type { CatalogItem } from "../types";
+import { newFilterState, renderFilterBar } from "../views/FilterBar";
 import { addButtons } from "./common";
 
 export class PickItemsModal extends Modal {
-	private filter: ItemFilter = { search: "", category: "", account: "", tag: "" };
+	private filterState = newFilterState();
 	private selected = new Set<string>();
 	private listEl!: HTMLElement;
 	private submitBtn?: HTMLButtonElement;
@@ -30,27 +31,14 @@ export class PickItemsModal extends Modal {
 	}
 
 	onOpen(): void {
-		const { contentEl, filter } = this;
+		const { contentEl } = this;
 		contentEl.addClass("budget-plugin", "budget-picker");
 
-		const bar = contentEl.createDiv({ cls: "budget-toolbar" });
-		const search = bar.createEl("input", { type: "search", placeholder: "Search…" });
-		search.addEventListener("input", () => {
-			filter.search = search.value;
-			this.renderList();
-		});
-		const dropdown = (label: string, options: string[], key: "category" | "account" | "tag") => {
-			const sel = bar.createEl("select", { cls: "dropdown" });
-			sel.createEl("option", { value: "", text: label });
-			for (const o of options) sel.createEl("option", { value: o, text: o });
-			sel.addEventListener("change", () => {
-				filter[key] = sel.value;
-				this.renderList();
-			});
-		};
-		dropdown("All categories", distinct(this.catalog.map((i) => i.category)), "category");
-		dropdown("All accounts", distinct(this.catalog.map((i) => i.account)), "account");
-		dropdown("All tags", distinct(this.catalog.flatMap((i) => i.tags)), "tag");
+		const bar = renderFilterBar(contentEl, {
+			items: this.catalog,
+			state: this.filterState,
+			onChange: () => this.renderList(),
+		}).toolbar;
 
 		const selectAll = bar.createEl("button", { text: "Select visible" });
 		selectAll.addEventListener("click", () => {
@@ -76,7 +64,7 @@ export class PickItemsModal extends Modal {
 	}
 
 	private visible(): CatalogItem[] {
-		return this.catalog.filter((i) => matchesFilter(i, this.filter));
+		return this.catalog.filter((i) => matchesFilter(i, this.filterState.filter));
 	}
 
 	private renderList(): void {

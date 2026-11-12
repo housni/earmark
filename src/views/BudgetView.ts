@@ -5,16 +5,52 @@ import { CreditModal } from "../modals/CreditModal";
 import { ItemModal, emptyFields } from "../modals/ItemModal";
 import { TransactionModal } from "../modals/TransactionModal";
 import { Total, balanceOf, formatMoney, spentOf, summarize } from "../money";
-import { distinct, errorMessage, newId, normalizeBudget, now, num, rebaseRates } from "../model";
+import {
+	SortKey,
+	distinct,
+	errorMessage,
+	isFiltered,
+	matchesFilter,
+	newId,
+	normalizeBudget,
+	now,
+	num,
+	rebaseRates,
+	sortItems,
+} from "../model";
 import { renderError, updateBlock } from "../store";
 import { BUDGET_LANG, Budget, BudgetItem, Credit } from "../types";
-import { iconButton, stampCell } from "./ui";
+import { FilterState, newFilterState, renderFilterBar } from "./FilterBar";
+import { iconButton, sortHeader, stampCell } from "./ui";
 
 // Module state survives the re-render that follows every save.
 /** Item ids whose spending log is open. */
 const expanded = new Set<string>();
 /** The input focused last, so tabbing between inputs survives a save. */
 let lastFocus: { key: string; at: number } | null = null;
+
+interface ViewState extends FilterState {
+	sortKey: SortKey | "";
+	sortDir: 1 | -1;
+}
+/** Filters and sorting per budget block (note path + block line). */
+const states = new Map<string, ViewState>();
+
+const ITEM_COLUMNS: { key?: SortKey; label: string; num?: boolean }[] = [
+	{ label: "" },
+	{ key: "name", label: "Name" },
+	{ key: "priority", label: "Priority" },
+	{ key: "category", label: "Category" },
+	{ key: "account", label: "Account" },
+	{ key: "manager", label: "Manager" },
+	{ key: "amount", label: "Allocated", num: true },
+	{ key: "spent", label: "Spent", num: true },
+	{ key: "balance", label: "Balance", num: true },
+	{ key: "created", label: "Created" },
+	{ key: "modified", label: "Modified" },
+	{ label: "" },
+	{ label: "" },
+];
 
 function byId<T extends { id: string }>(list: T[], id: string, what: string): number {
 	const i = list.findIndex((x) => x.id === id);
@@ -108,34 +144,73 @@ export function renderBudget(plugin: BudgetPlugin, source: string, el: HTMLEleme
 		button(controls, "Refresh from catalog", () => void plugin.refreshFromCatalog(file, lineStart()));
 	}
 
-	// Summary
-	const s = summarize(budget);
-	const cards = root.createDiv({ cls: "budget-cards" });
-	card(cards, "Total cost", s.totalCost);
-	card(cards, "Spent", s.spent);
-	card(cards, "To be spent", s.toSpend);
-	if (Object.keys(s.overspent.byCurrency).length) card(cards, "Overspent", s.overspent, "budget-neg");
-	card(cards, "Credits", s.credits);
-	const net = s.net.base ?? 0;
-	card(cards, net < 0 ? "Shortfall" : "Surplus", s.net, net < 0 ? "budget-neg" : "budget-pos");
+	const stateKey = `${file.path}#${lineStart() ?? 0}`;
+	const state: ViewState = states.get(stateKey) ?? { ...newFilterState(), sortKey: "", sortDir: 1 };
+	states.set(stateKey, state);
+
+	// Summary. Item cards follow the filters; credits and surplus/shortfall are whole-budget.
+	const summaryEl = root.createDiv();
 
 	// Items
 	section(root, "Items");
+	const filterBar = renderFilterBar(root, { items: budget.items, state, status: true, onChange: () => refresh() });
 	const itemsWrap = root.createDiv({ cls: "budget-table-wrap" });
-	if (!budget.items.length) {
-		itemsWrap.createDiv({ cls: "budget-empty", text: "No items yet. Use “Add from catalog” to pick some." });
-	} else {
+
+	refresh();
+
+	function refresh(): void {
+		const visible = budget.items.filter((i) => matchesFilter(i, state.filter));
+		renderSummary(visible);
+		renderItems(sortItems(visible, state.sortKey, state.sortDir, settings.priorities));
+	}
+
+	function renderSummary(visible: BudgetItem[]): void {
+		summaryEl.empty();
+		const filtered = isFiltered(state.filter);
+		if (filtered) {
+			const note = summaryEl.createDiv({ cls: "budget-filter-note" });
+			note.appendText(
+				`Filtered: ${visible.length} of ${budget.items.length} items. Credits and surplus/shortfall are for the whole budget. `,
+			);
+			const clear = note.createEl("a", { text: "Clear filters", href: "#" });
+			clear.addEventListener("click", (e) => {
+				e.preventDefault();
+				filterBar.clear();
+			});
+		}
+		const whole = summarize(budget);
+		const s = filtered ? summarize({ ...budget, items: visible }) : whole;
+		const cards = summaryEl.createDiv({ cls: "budget-cards" });
+		card(cards, "Total cost", s.totalCost);
+		card(cards, "Spent", s.spent);
+		card(cards, "To be spent", s.toSpend);
+		if (Object.keys(s.overspent.byCurrency).length) card(cards, "Overspent", s.overspent, "budget-neg");
+		card(cards, "Credits", whole.credits);
+		const net = whole.net.base ?? 0;
+		card(cards, net < 0 ? "Shortfall" : "Surplus", whole.net, net < 0 ? "budget-neg" : "budget-pos");
+	}
+
+	function renderItems(rows: BudgetItem[]): void {
+		itemsWrap.empty();
+		if (!budget.items.length) {
+			itemsWrap.createDiv({ cls: "budget-empty", text: "No items yet. Use “Add from catalog” to pick some." });
+			return;
+		}
 		const table = itemsWrap.createEl("table", { cls: "budget-table" });
 		const head = table.createEl("thead").createEl("tr");
-		for (const [label, isNum] of [
-			["", false], ["Name", false], ["Category", false], ["Account", false], ["Manager", false],
-			["Allocated", true], ["Spent", true], ["Balance", true], ["Created", false], ["Modified", false],
-			["", false], ["", false],
-		] as [string, boolean][]) {
-			head.createEl("th", { text: label, cls: isNum ? "budget-num" : "" });
+		for (const col of ITEM_COLUMNS) {
+			if (col.key) sortHeader(head, col.label, col.key, state, refresh, col.num, true);
+			else head.createEl("th");
 		}
 		const body = table.createEl("tbody");
-		for (const item of budget.items) renderItemRow(body, item);
+		if (!rows.length) {
+			body.createEl("tr").createEl("td", {
+				cls: "budget-empty",
+				text: "No items match the filters.",
+				attr: { colspan: String(ITEM_COLUMNS.length) },
+			});
+		}
+		for (const item of rows) renderItemRow(body, item);
 	}
 
 	function renderItemRow(body: HTMLElement, item: BudgetItem): void {
@@ -162,7 +237,8 @@ export function renderBudget(plugin: BudgetPlugin, source: string, el: HTMLEleme
 			name.title = item.description;
 			name.addClass("budget-has-desc");
 		}
-		if (item.priority) name.createSpan({ cls: "budget-badge", text: item.priority });
+		const prio = tr.createEl("td");
+		if (item.priority) prio.createSpan({ cls: "budget-badge", text: item.priority });
 		tr.createEl("td", { text: item.category });
 		tr.createEl("td", { text: item.account });
 		tr.createEl("td", { text: item.manager });
@@ -216,7 +292,7 @@ export function renderBudget(plugin: BudgetPlugin, source: string, el: HTMLEleme
 		});
 
 		if (!isOpen) return;
-		const sub = body.createEl("tr", { cls: "budget-subrow" }).createEl("td", { attr: { colspan: "12" } });
+		const sub = body.createEl("tr", { cls: "budget-subrow" }).createEl("td", { attr: { colspan: String(ITEM_COLUMNS.length) } });
 		if (!item.transactions.length) {
 			sub.createDiv({ cls: "budget-empty", text: "No spending recorded yet." });
 			return;

@@ -26,13 +26,24 @@ export function sortHeader<K extends string>(
 	state: { sortKey: K | ""; sortDir: 1 | -1 },
 	onSort: () => void,
 	numeric = false,
+	/** A third click returns to the original order. */
+	allowUnsorted = false,
 ): void {
 	const th = row.createEl("th", { cls: numeric ? "budget-num budget-sortable" : "budget-sortable" });
 	th.setText(label + (state.sortKey === key ? (state.sortDir === 1 ? " ▲" : " ▼") : ""));
 	th.setAttr("aria-sort", state.sortKey === key ? (state.sortDir === 1 ? "ascending" : "descending") : "none");
 	th.addEventListener("click", () => {
-		state.sortDir = state.sortKey === key ? (state.sortDir === 1 ? -1 : 1) : 1;
-		state.sortKey = key;
+		if (state.sortKey !== key) {
+			state.sortKey = key;
+			state.sortDir = 1;
+		} else if (state.sortDir === 1) {
+			state.sortDir = -1;
+		} else if (allowUnsorted) {
+			state.sortKey = "";
+			state.sortDir = 1;
+		} else {
+			state.sortDir = 1;
+		}
 		onSort();
 	});
 }

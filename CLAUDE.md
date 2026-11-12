@@ -14,13 +14,14 @@ Obsidian plugin for budget planning and tracking. Data lives in notes as YAML in
 - `src/config.ts`: settings shape, defaults and `migrateSettings` (pure, tested). Bump `SETTINGS_VERSION` and add a step there when saved settings need a one-time change. `src/settings.ts` is only the settings tab.
 - `src/dates.ts`: `formatDate` wraps Obsidian's `moment` (cast, because TS 7 rejects its declared type).
 - `src/store.ts`: `updateBlock` rewrites one block via `vault.process`, located by `getSectionInfo().lineStart`.
-- `src/views/`: `CatalogView`, `BudgetView` (rendered per code block).
+- `src/views/`: `CatalogView`, `BudgetView` (rendered per code block), `FilterBar` (shared search + filter panel), `ui.ts` (small DOM helpers).
 - `src/modals/`: forms and pickers.
 - Original design: `.claude/plans/initial-plan.md`.
 
 ## Conventions
 - Mutate rows by `id` (items, transactions, credits), never by index.
 - Items carry `created`/`modified` ISO timestamps. Any change to an item sets `modified` (`saveItem` in BudgetView does it for budget items; snapshots get their own dates; refresh keeps `created`). Sorting lives in `sortItems` in `model.ts` (blanks last).
+- Filtering lives in `matchesFilter`/`ItemFilter` in `model.ts` (every item field). Views use the shared `views/FilterBar.ts`; when adding an item field, add it to the filter, `sortItems` and the FilterBar together.
 - Normalizers spread the raw object first so hand-added YAML keys survive saves; `toPlain` drops empty fields below top level.
 - Budget items are snapshots of catalog items (`sourceId` links back); refresh keeps `id` and `transactions`.
 - No inline styles or `innerHTML` (community plugin guidelines); use CSS classes/variables in `styles.css`.

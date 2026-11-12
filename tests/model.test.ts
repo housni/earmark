@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 import { parse, stringify } from "yaml";
 import { migrateSettings } from "../src/config";
 import {
+	activeFilterCount,
 	catalogNeedsIds,
+	emptyFilter,
+	isFiltered,
+	itemStatus,
 	findBlocks,
 	isoDate,
 	matchesFilter,
@@ -161,9 +165,9 @@ describe("snapshots", () => {
 	});
 
 	it("filters by category, tag and search text", () => {
-		expect(matchesFilter(rent, { search: "", category: "Housing", account: "", tag: "fixed" })).toBe(true);
-		expect(matchesFilter(rent, { search: "ren", category: "", account: "", tag: "" })).toBe(true);
-		expect(matchesFilter(rent, { search: "", category: "Pet", account: "", tag: "" })).toBe(false);
+		expect(matchesFilter(rent, { ...emptyFilter(), category: "Housing", tag: "fixed" })).toBe(true);
+		expect(matchesFilter(rent, { ...emptyFilter(), search: "ren" })).toBe(true);
+		expect(matchesFilter(rent, { ...emptyFilter(), category: "Pet" })).toBe(false);
 	});
 });
 
@@ -265,5 +269,84 @@ items:
 	it("puts blank dates last in both directions", () => {
 		expect(ids("created")).toEqual(["c", "d", "a", "b"]);
 		expect(ids("created", -1)).toEqual(["a", "d", "c", "b"]);
+	});
+});
+
+describe("filters", () => {
+	const items = normalizeBudget(
+		parse(`
+items:
+  - id: a
+    name: Rent
+    amount: 100
+    currency: LKR
+    frequency: Monthly
+    account: Common
+    category: Housing
+    priority: High
+    manager: Housni
+    tags: [fixed]
+    created: 2026-11-01T10:00:00.000Z
+    modified: 2026-11-10T10:00:00.000Z
+    transactions: [{ amount: 100 }]
+  - id: b
+    name: Visa
+    description: Work permit renewal
+    amount: 200
+    currency: USD
+    frequency: One-time
+    account: Housni
+    category: Immigration
+    priority: Low
+    manager: Housni
+    transactions: [{ amount: 50 }]
+  - { id: c, name: Vet, amount: 15, currency: LKR, category: Pet, transactions: [{ amount: 20 }] }
+  - { id: d, name: Food, amount: 40, currency: LKR, category: Food }
+`),
+		"LKR",
+	).items;
+	const ids = (f: Partial<ReturnType<typeof emptyFilter>>) =>
+		items.filter((i) => matchesFilter(i, { ...emptyFilter(), ...f })).map((i) => i.id);
+
+	it("matches everything with an empty filter", () => {
+		expect(ids({})).toEqual(["a", "b", "c", "d"]);
+		expect(isFiltered(emptyFilter())).toBe(false);
+	});
+
+	it("filters by each choice field", () => {
+		expect(ids({ frequency: "Monthly" })).toEqual(["a"]);
+		expect(ids({ priority: "Low" })).toEqual(["b"]);
+		expect(ids({ manager: "Housni" })).toEqual(["a", "b"]);
+		expect(ids({ currency: "USD" })).toEqual(["b"]);
+		expect(ids({ account: "Common", category: "Housing" })).toEqual(["a"]);
+		expect(ids({ tag: "fixed" })).toEqual(["a"]);
+	});
+
+	it("searches descriptions and ignores case", () => {
+		expect(ids({ search: "PERMIT" })).toEqual(["b"]);
+		expect(ids({ search: "   " })).toEqual(["a", "b", "c", "d"]);
+	});
+
+	it("filters amounts inclusively, ignoring blank bounds", () => {
+		expect(ids({ amountMin: "40" })).toEqual(["a", "b", "d"]);
+		expect(ids({ amountMin: "15", amountMax: "100" })).toEqual(["a", "c", "d"]);
+		expect(ids({ amountMax: "1,000" })).toEqual(["a", "b", "c", "d"]);
+	});
+
+	it("filters dates inclusively and excludes items without dates", () => {
+		expect(ids({ createdFrom: "2026-11-01" })).toEqual(["a"]);
+		expect(ids({ modifiedTo: "2026-11-09" })).toEqual([]);
+		expect(ids({ modifiedFrom: "2026-11-10", modifiedTo: "2026-11-10" })).toEqual(["a"]);
+	});
+
+	it("filters by spending status", () => {
+		expect(items.map(itemStatus)).toEqual(["spent", "in-progress", "over", "not-started"]);
+		expect(ids({ status: "over" })).toEqual(["c"]);
+		expect(ids({ status: "not-started" })).toEqual(["d"]);
+	});
+
+	it("counts active filters without the search text", () => {
+		expect(activeFilterCount({ ...emptyFilter(), search: "x", category: "Pet", amountMin: "1" })).toBe(2);
+		expect(isFiltered({ ...emptyFilter(), search: "x" })).toBe(true);
 	});
 });

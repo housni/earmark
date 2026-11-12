@@ -3,12 +3,13 @@ import type BudgetPlugin from "../main";
 import { ConfirmModal } from "../modals/common";
 import { ItemModal } from "../modals/ItemModal";
 import { formatMoney } from "../money";
-import { SortKey, distinct, errorMessage, matchesFilter, newId, normalizeCatalog, now, sortItems } from "../model";
+import { SortKey, errorMessage, isFiltered, matchesFilter, newId, normalizeCatalog, now, sortItems } from "../model";
 import { renderError, updateBlock } from "../store";
-import { CATALOG_LANG, Catalog, ItemFilter } from "../types";
+import { CATALOG_LANG, Catalog } from "../types";
+import { FilterState, newFilterState, renderFilterBar } from "./FilterBar";
 import { iconButton, sortHeader, stampCell } from "./ui";
 
-interface ViewState extends ItemFilter {
+interface ViewState extends FilterState {
 	sortKey: SortKey | "";
 	sortDir: 1 | -1;
 }
@@ -51,33 +52,13 @@ export function renderCatalog(plugin: BudgetPlugin, source: string, el: HTMLElem
 	};
 
 	const { settings } = plugin;
-	const state = states.get(file.path) ?? { search: "", category: "", account: "", tag: "", sortKey: "name", sortDir: 1 };
+	const state: ViewState = states.get(file.path) ?? { ...newFilterState(), sortKey: "name", sortDir: 1 };
 	states.set(file.path, state);
 
 	const root = el.createDiv({ cls: "budget-plugin budget-catalog" });
-	const bar = root.createDiv({ cls: "budget-toolbar" });
+	const filterBar = renderFilterBar(root, { items: catalog.items, state, onChange: () => renderTable() });
 
-	const search = bar.createEl("input", { type: "search", placeholder: "Search…", value: state.search });
-	search.addEventListener("input", () => {
-		state.search = search.value;
-		renderTable();
-	});
-	const dropdown = (label: string, options: string[], key: "category" | "account" | "tag") => {
-		const sel = bar.createEl("select", { cls: "dropdown" });
-		sel.createEl("option", { value: "", text: label });
-		for (const o of options) sel.createEl("option", { value: o, text: o });
-		sel.value = options.includes(state[key]) ? state[key] : "";
-		state[key] = sel.value;
-		sel.addEventListener("change", () => {
-			state[key] = sel.value;
-			renderTable();
-		});
-	};
-	dropdown("All categories", distinct(catalog.items.map((i) => i.category)), "category");
-	dropdown("All accounts", distinct(catalog.items.map((i) => i.account)), "account");
-	dropdown("All tags", distinct(catalog.items.flatMap((i) => i.tags)), "tag");
-
-	const add = bar.createEl("button", { cls: "mod-cta", text: "Add item" });
+	const add = filterBar.toolbar.createEl("button", { cls: "mod-cta", text: "Add item" });
 	add.addEventListener("click", () =>
 		new ItemModal(plugin.app, settings, null, (fields) => save((c) => {
 			const at = now();
@@ -91,7 +72,7 @@ export function renderCatalog(plugin: BudgetPlugin, source: string, el: HTMLElem
 	function renderTable(): void {
 		tableWrap.empty();
 		const rows = sortItems(
-			catalog.items.filter((item) => matchesFilter(item, state)),
+			catalog.items.filter((item) => matchesFilter(item, state.filter)),
 			state.sortKey,
 			state.sortDir,
 			settings.priorities,
@@ -109,6 +90,13 @@ export function renderCatalog(plugin: BudgetPlugin, source: string, el: HTMLElem
 		head.createEl("th");
 
 		const body = table.createEl("tbody");
+		if (!rows.length && isFiltered(state.filter)) {
+			body.createEl("tr").createEl("td", {
+				cls: "budget-empty",
+				text: "No items match the filters.",
+				attr: { colspan: String(COLUMNS.length + 1) },
+			});
+		}
 		for (const item of rows) {
 			const tr = body.createEl("tr");
 			const name = tr.createEl("td", { text: item.name });

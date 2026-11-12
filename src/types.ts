@@ -60,9 +60,26 @@ export interface Budget {
 	credits: Credit[];
 }
 
+/** Where a budget item's spending stands against its allocation. */
+export type ItemStatus = "not-started" | "in-progress" | "spent" | "over";
+
+/** Every field is "" when unused. Amounts are input text; dates are YYYY-MM-DD. */
 export interface ItemFilter {
+	/** Matches name, description, tags, manager, category and account. */
 	search: string;
 	category: string;
 	account: string;
 	tag: string;
+	frequency: string;
+	priority: string;
+	manager: string;
+	currency: string;
+	amountMin: string;
+	amountMax: string;
+	createdFrom: string;
+	createdTo: string;
+	modifiedFrom: string;
+	modifiedTo: string;
+	/** Budget items only. */
+	status: ItemStatus | "";
 }
