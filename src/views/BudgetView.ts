@@ -42,7 +42,7 @@ const ITEM_COLUMNS: { key?: SortKey; label: string; num?: boolean }[] = [
 	{ key: "priority", label: "Priority" },
 	{ key: "category", label: "Category" },
 	{ key: "account", label: "Account" },
-	{ key: "manager", label: "Manager" },
+	{ key: "manager", label: "Executor" },
 	{ key: "amount", label: "Allocated", num: true },
 	{ key: "spent", label: "Spent", num: true },
 	{ key: "balance", label: "Balance", num: true },

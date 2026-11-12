@@ -25,7 +25,7 @@ const COLUMNS: { key: SortKey; label: string; num?: boolean }[] = [
 	{ key: "category", label: "Category" },
 	{ key: "priority", label: "Priority" },
 	{ key: "tags", label: "Tags" },
-	{ key: "manager", label: "Manager" },
+	{ key: "manager", label: "Executor" },
 	{ key: "created", label: "Created" },
 	{ key: "modified", label: "Modified" },
 ];

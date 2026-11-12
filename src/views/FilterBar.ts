@@ -36,7 +36,7 @@ const CHOICES: { key: Choice; label: string; values: (items: ListItem[]) => stri
 	{ key: "tag", label: "Tag", values: (items) => items.flatMap((i) => i.tags) },
 	{ key: "frequency", label: "Frequency", values: (items) => items.map((i) => i.frequency) },
 	{ key: "priority", label: "Priority", values: (items) => items.map((i) => i.priority) },
-	{ key: "manager", label: "Manager", values: (items) => items.map((i) => i.manager) },
+	{ key: "manager", label: "Executor", values: (items) => items.map((i) => i.manager) },
 	{ key: "currency", label: "Currency", values: (items) => items.map((i) => i.currency) },
 ];
 

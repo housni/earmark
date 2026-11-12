@@ -27,11 +27,11 @@ To install by hand instead, download `earmark-<version>.zip` from the [latest re
 Budget items are *copies* of catalog items, so editing the catalog never changes a past budget. **Refresh from catalog** pulls the current values while keeping your spending.
 
 Both the catalog and budgets:
-- **Search and filter** by every field: category, account, tag, frequency, priority, manager, currency, amount range, and created/modified dates. Budgets can also filter by spending status (not started, in progress, fully spent, overspent). While a budget is filtered, its cost and spending cards cover only the visible items.
+- **Search and filter** by every field: category, account, tag, frequency, priority, executor, currency, amount range, and created/modified dates. Budgets can also filter by spending status (not started, in progress, fully spent, overspent). While a budget is filtered, its cost and spending cards cover only the visible items.
 - **Sort** by clicking any column header.
 - Track **created** and **modified** dates for every item.
 
-Frequencies, categories, accounts, priorities, managers, currencies and the title format are all configured in the plugin settings.
+Frequencies, categories, accounts, priorities, executors, currencies and the title format are all configured in the plugin settings.
 
 ### Colour vision
 

@@ -82,14 +82,14 @@ The lists under **Lists** fill the dropdowns in the item form. Each one has a de
 |---|---|---|
 | Categories | Charity/Donation, Debts, Entertainment, Family, Food, Health, Holidays, Housing, Pet, Savings, Subscriptions, Transport, Utilities, Other | A–Z, Other last |
 | Accounts | Common, Jane, John | A–Z |
-| Managers | Jane, John | A–Z |
+| Executors | Jane, John | A–Z |
 | Frequencies | One-time, Weekly, Monthly, Quarterly, Yearly | as typed |
 | Priorities | High, Medium, Low | as typed, highest first |
 
 **Upgrading an existing install:** a saved list that you never changed, i.e. one still identical to an older version's defaults, is replaced with the new default list once, the first time this version loads. For example, the old *Housing, Food, … Immigration, Health, Other* categories, or accounts *Housni, Common*. Lists you've customised are kept and only put into A–Z order. Other saved settings, such as your base currency or colour vision mode, are never touched.
 
 Check how the lists behave:
-- **Sorting**: add `Books` to the end of *Categories*, then click outside the box. The text re-orders: *Books* moves between *Charity/Donation* and *Debts*, and *Other* stays last. *Accounts* and *Managers* behave the same way. *Priorities* and *Frequencies* keep the order you type.
+- **Sorting**: add `Books` to the end of *Categories*, then click outside the box. The text re-orders: *Books* moves between *Charity/Donation* and *Debts*, and *Other* stays last. *Accounts* and *Executors* behave the same way. *Priorities* and *Frequencies* keep the order you type.
 - **Duplicates and blank lines** are dropped, e.g. typing `food` when *Food* is already there.
 - **Notices**: changing *Currencies*, *Priorities*, *Default base currency* or *Number format locale* shows one notice per setting, each time you open the settings page. It says that budget and catalog notes that are already open show the change once you close and reopen them, and that no restart is needed. Other settings apply immediately and show no notice.
 
@@ -103,7 +103,7 @@ How numbers are displayed (symbols, separators) depends on your system locale, o
    - In Reading view or Live Preview, it shows a toolbar (search, filters, **Add item**) and "No items yet."
 2. Click **Add item** and create these items:
 
-   | Name | Amount | Currency | Frequency | Account | Category | Priority | Tags | Managed by |
+   | Name | Amount | Currency | Frequency | Account | Category | Priority | Tags | Executor |
    |---|---|---|---|---|---|---|---|---|
    | Rent | 100000 | LKR | Monthly | Common | Housing | High | fixed | John |
    | Vet | 15000 | LKR | One-time | Common | Pet | Medium | | Jane |
@@ -117,8 +117,8 @@ How numbers are displayed (symbols, separators) depends on your system locale, o
    - saving an item with no name is blocked with a notice
 3. **Sorting**: click the *Amount* header. Rows sort by amount and a ▲ appears; click again for ▼. Sorting by *Priority* follows the order in settings (High first).
 4. **Filtering**:
-   - Type in **Search**. It matches name, description, manager, category, account and tags, ignoring case.
-   - Click **Filters** to open the panel. It has a dropdown for each field you've used (category, account, tag, frequency, priority, manager, currency), plus ranges for amount, created and modified.
+   - Type in **Search**. It matches name, description, executor, category, account and tags, ignoring case.
+   - Click **Filters** to open the panel. It has a dropdown for each field you've used (category, account, tag, frequency, priority, executor, currency), plus ranges for amount, created and modified.
    - Set one or two filters. The button reads **Filters (n)** and the footer reads "N of 3 items".
    - **Clear** resets everything, including the search. A filter that matches nothing shows "No items match the filters."
 5. **Edit**: use the pencil on *Vet* to change the amount to 15500, then back to 15000. **Delete**: use the trash icon on a throwaway item. A confirmation appears before anything is removed.
