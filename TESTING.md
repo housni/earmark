@@ -99,11 +99,13 @@ How numbers are displayed (symbols, separators) depends on your system locale, o
 2. Run **Earmark: New budget**. The suggested title follows the format, for example `2026-11 November`. Accept it, or type your own.
 3. In the picker, check that you can filter and use **Select visible**. The submit button counts selected items ("Add 3 items"). Select all three and confirm.
    - You should see `Budgets/<title>.md` created and opened.
-   - It has a header with the title, a base-currency dropdown, and the buttons **Add from catalog**, **Add custom item** and **Refresh from catalog**.
-4. With no exchange rate yet, the *Total cost* card shows **—**. Below it are per-currency subtotals (115,000 LKR + 200 USD) and **"Needs a rate for USD"**.
+   - It has a header with the title, a base-currency dropdown, and the buttons **Open catalog**, **Add from catalog**, **Add custom item** and **Refresh from catalog**.
+   - **Open catalog** opens the catalog note, the same as the command does. Go back to the budget afterwards.
+4. With no exchange rate yet, the *Total cost* card shows **—**. Below it are per-currency subtotals (115,000 LKR + 200 USD) and **"Needs a rate for USD"**, with **USD** as a link.
+5. Click the **USD** link. The page scrolls to **Exchange rates**, the "1 USD = … LKR" box gets the cursor, and the row is outlined for a moment.
 
 ### 4.3 Exchange rates
-1. Under **Exchange rates**, enter `300` in the "1 USD = … LKR" box and press Tab or Enter.
+1. In the box you just jumped to, under **Exchange rates**, enter `300` and press Tab or Enter.
    - The warning goes away and *Total cost* reads **175,000 LKR**: 100,000 + 15,000 + 200 × 300.
 
 ### 4.4 Spending

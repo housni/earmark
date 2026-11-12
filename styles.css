@@ -231,6 +231,19 @@
 	gap: var(--size-4-2);
 }
 
+.budget-rate.is-highlighted {
+	border-radius: var(--radius-s);
+	outline: 2px solid var(--interactive-accent);
+	outline-offset: 4px;
+	transition: outline-color 0.3s;
+}
+
+.budget-card-warn a {
+	color: inherit;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
 /* Picker modal */
 .budget-pick-list {
 	max-height: 50vh;

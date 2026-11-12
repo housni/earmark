@@ -78,6 +78,7 @@ export function renderBudget(plugin: BudgetPlugin, source: string, el: HTMLEleme
 			).open();
 		}
 	});
+	button(controls, "Open catalog", () => void plugin.openCatalog());
 	button(controls, "Add from catalog", () => void plugin.addItemsFromCatalog(file, lineStart()), true);
 	button(controls, "Add custom item", () =>
 		new ItemModal(
@@ -310,8 +311,27 @@ export function renderBudget(plugin: BudgetPlugin, source: string, el: HTMLEleme
 			c.createDiv({ cls: "budget-card-sub", text: parts.join(" + ") });
 		}
 		if (t.missing.length) {
-			c.createDiv({ cls: "budget-card-warn", text: `Needs a rate for ${t.missing.join(", ")}` });
+			const warn = c.createDiv({ cls: "budget-card-warn", text: "Needs a rate for " });
+			t.missing.forEach((cur, i) => {
+				if (i) warn.appendText(", ");
+				const link = warn.createEl("a", { text: cur, href: "#", attr: { "aria-label": `Add the ${cur} exchange rate` } });
+				link.addEventListener("click", (e) => {
+					e.preventDefault();
+					focusRate(cur);
+				});
+			});
 		}
+	}
+
+	/** Scrolls to a currency's exchange-rate input, focuses it and briefly highlights its row. */
+	function focusRate(cur: string): void {
+		const input = root.querySelector<HTMLInputElement>(`[data-budget-focus="${CSS.escape(`rate-${cur}`)}"]`);
+		if (!input) return;
+		const row = input.closest(".budget-rate");
+		input.scrollIntoView({ behavior: "smooth", block: "center" });
+		input.focus({ preventScroll: true });
+		row?.addClass("is-highlighted");
+		window.setTimeout(() => row?.removeClass("is-highlighted"), 1600);
 	}
 }
 
