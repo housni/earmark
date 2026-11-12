@@ -14,7 +14,7 @@ To install by hand instead, download `earmark-<version>.zip` from the [latest re
 
 ## Use
 
-1. **Open or create budget catalog** (command palette) creates `Budgets/_Catalog.md`. Click **Add item** to add rent, vet bills, visa fees and so on.
+1. **Open or create budget catalog** (command palette) creates `Earmark/Catalog.md`. You can change the folder and the catalog note's name in settings. Click **Add item** to add rent, vet bills, visa fees and so on.
 2. **New budget** suggests a title using your *Budget title format* (moment tokens, default `YYYY-MM MMMM`). It then lets you pick items from the catalog and creates a budget note.
 3. In the budget note:
    - **⊕** logs spending against an item. The chevron shows its log.

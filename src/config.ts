@@ -1,6 +1,7 @@
 // Settings shape, defaults and migrations. No Obsidian imports, so migrations are testable.
 
 export const DEFAULT_TITLE_FORMAT = "YYYY-MM MMMM";
+export const DEFAULT_CATALOG_NAME = "Catalog";
 
 export type ColorVision = "standard" | "redgreen" | "blueyellow" | "mono";
 
@@ -14,8 +15,10 @@ export const COLOR_VISIONS: { value: ColorVision; label: string }[] = [
 export interface BudgetSettings {
 	/** Bumped when a migration in migrateSettings() must run once. */
 	settingsVersion: number;
-	catalogPath: string;
-	budgetsFolder: string;
+	/** Vault folder holding the catalog and new budgets; "" is the vault root. */
+	folder: string;
+	/** Name of the catalog note inside `folder`, without ".md". */
+	catalogName: string;
 	/** Moment format for the suggested title of a new budget. */
 	titleFormat: string;
 	baseCurrency: string;
@@ -31,12 +34,12 @@ export interface BudgetSettings {
 	colorVision: ColorVision;
 }
 
-export const SETTINGS_VERSION = 3;
+export const SETTINGS_VERSION = 4;
 
 export const DEFAULT_SETTINGS: BudgetSettings = {
 	settingsVersion: SETTINGS_VERSION,
-	catalogPath: "Budgets/_Catalog.md",
-	budgetsFolder: "Budgets",
+	folder: "Earmark",
+	catalogName: "Catalog",
 	titleFormat: DEFAULT_TITLE_FORMAT,
 	baseCurrency: "USD",
 	locale: "",
@@ -51,6 +54,23 @@ export const DEFAULT_SETTINGS: BudgetSettings = {
 	managers: ["Jane", "John"],
 	colorVision: "standard",
 };
+
+/** Folder as typed, without leading/trailing slashes or spaces. */
+export function cleanFolder(folder: string): string {
+	return folder.trim().replace(/^\/+|\/+$/g, "").trim();
+}
+
+/** Note name as typed, without a trailing ".md" or any folder part. */
+export function cleanNoteName(name: string): string {
+	return name.trim().replace(/\.md$/i, "").split("/").pop()!.trim();
+}
+
+/** Vault path of the catalog note, e.g. "Earmark/Catalog.md". */
+export function catalogPathOf(s: Pick<BudgetSettings, "folder" | "catalogName">): string {
+	const name = cleanNoteName(s.catalogName) || DEFAULT_CATALOG_NAME;
+	const folder = cleanFolder(s.folder);
+	return folder ? `${folder}/${name}.md` : `${name}.md`;
+}
 
 /**
  * Lists kept in A–Z order (see sortedList). Frequencies, priorities and
@@ -114,6 +134,21 @@ export function migrateSettings(saved: Partial<BudgetSettings> | null): { settin
 		for (const key of SORTED_LISTS) {
 			if (PREVIOUS_DEFAULTS[key].some((old) => sameList(settings[key], old))) settings[key] = [...DEFAULT_SETTINGS[key]];
 		}
+	}
+	if (from < 4) {
+		// v4: the "Catalog note" path and "Budgets folder" became one folder plus a catalog
+		// name, so the folder isn't typed twice. Existing installs keep finding their catalog;
+		// if it was outside the budgets folder, its folder wins and new budgets go there too.
+		const legacy = saved as Record<string, unknown>;
+		if (typeof legacy.catalogPath === "string" || typeof legacy.budgetsFolder === "string") {
+			const path = cleanFolder(typeof legacy.catalogPath === "string" ? legacy.catalogPath : "Budgets/_Catalog.md");
+			const slash = path.lastIndexOf("/");
+			settings.folder = slash < 0 ? "" : path.slice(0, slash);
+			settings.catalogName = cleanNoteName(path);
+		}
+		const raw = settings as unknown as Record<string, unknown>;
+		delete raw.catalogPath;
+		delete raw.budgetsFolder;
 	}
 	settings.settingsVersion = SETTINGS_VERSION;
 	return { settings, changed: from < SETTINGS_VERSION };

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parse, stringify } from "yaml";
-import { DEFAULT_SETTINGS, migrateSettings, sortedList } from "../src/config";
+import { DEFAULT_SETTINGS, catalogPathOf, cleanFolder, cleanNoteName, migrateSettings, sortedList } from "../src/config";
 import {
 	activeFilterCount,
 	catalogNeedsIds,
@@ -251,12 +251,12 @@ describe("settings migration", () => {
 		const { settings, changed } = migrateSettings({ currencies: ["USD", "LKR"], baseCurrency: "LKR" });
 		expect(settings.currencies).toEqual(["USD", "LKR", "KES"]);
 		expect(settings.baseCurrency).toBe("LKR");
-		expect(settings.settingsVersion).toBe(3);
+		expect(settings.settingsVersion).toBe(4);
 		expect(changed).toBe(true);
 	});
 
 	it("respects removals made after migrating", () => {
-		const { settings, changed } = migrateSettings({ settingsVersion: 3, currencies: ["USD"] });
+		const { settings, changed } = migrateSettings({ settingsVersion: 4, currencies: ["USD"] });
 		expect(settings.currencies).toEqual(["USD"]);
 		expect(changed).toBe(false);
 	});
@@ -440,5 +440,42 @@ describe("sortedList", () => {
 
 	it("trims, drops blanks and case-insensitive duplicates", () => {
 		expect(sortedList([" John ", "", "jane", "John", "JANE", "  "])).toEqual(["jane", "John"]);
+	});
+});
+
+describe("catalog location", () => {
+	it("defaults to Earmark/Catalog.md for new installs", () => {
+		expect(catalogPathOf(migrateSettings(null).settings)).toBe("Earmark/Catalog.md");
+	});
+
+	it("builds the path from folder and name, tolerating stray slashes and .md", () => {
+		expect(catalogPathOf({ folder: "/Money/Earmark/", catalogName: "My catalog.md" })).toBe("Money/Earmark/My catalog.md");
+		expect(catalogPathOf({ folder: "", catalogName: "Catalog" })).toBe("Catalog.md");
+		expect(catalogPathOf({ folder: "Earmark", catalogName: "  " })).toBe("Earmark/Catalog.md");
+		expect(cleanFolder(" /a/b/ ")).toBe("a/b");
+		expect(cleanNoteName("Earmark/Catalog.md")).toBe("Catalog");
+	});
+
+	it("keeps existing installs pointing at their catalog (v4)", () => {
+		// The settings this vault saved before #12's comment.
+		const { settings, changed } = migrateSettings({
+			settingsVersion: 3,
+			catalogPath: "Budgets/_Catalog.md",
+			budgetsFolder: "Budgets",
+		} as never);
+		expect(settings.folder).toBe("Budgets");
+		expect(settings.catalogName).toBe("_Catalog");
+		expect(catalogPathOf(settings)).toBe("Budgets/_Catalog.md");
+		expect(settings).not.toHaveProperty("catalogPath");
+		expect(settings).not.toHaveProperty("budgetsFolder");
+		expect(changed).toBe(true);
+	});
+
+	it("follows the catalog when it lived outside the budgets folder", () => {
+		const moved = migrateSettings({ settingsVersion: 3, catalogPath: "Finance/Items.md", budgetsFolder: "Budgets" } as never);
+		expect(catalogPathOf(moved.settings)).toBe("Finance/Items.md");
+		expect(moved.settings.folder).toBe("Finance");
+		const atRoot = migrateSettings({ settingsVersion: 3, catalogPath: "Catalog.md", budgetsFolder: "" } as never);
+		expect(catalogPathOf(atRoot.settings)).toBe("Catalog.md");
 	});
 });
