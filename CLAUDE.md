@@ -8,6 +8,7 @@ Obsidian plugin for budget planning and tracking. Data lives in notes as YAML in
 - `npm test`: vitest (pure modules only)
 - Release: `npm version patch|minor|major && git push --follow-tags`. `version-bump.mjs` syncs `manifest.json` and `versions.json`, and pushing the tag runs `.github/workflows/release.yml`. Never edit versions by hand.
 - Manual test walkthrough in Obsidian: `TESTING.md`. Keep its steps, button names and expected numbers in sync when UI or totals change.
+- README demo video: generated from `docs/demo/` (see its README). When the UI or totals change visibly, update `docs/demo/demo.html`, re-render, and replace the README's `user-attachments` link.
 
 ## Layout
 - `src/model.ts`, `src/money.ts`: pure logic (normalize, ids, block find/replace, totals). No `obsidian` imports, so they stay testable.

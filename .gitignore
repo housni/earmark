@@ -25,3 +25,7 @@ CLAUDE.local.md
 .idea/
 .vscode/
 *.swp
+
+# Demo video generator (docs/demo)
+docs/demo/node_modules/
+docs/demo/out/

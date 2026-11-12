@@ -1,0 +1,12 @@
+{
+  "name": "earmark-demo-video",
+  "private": true,
+  "description": "Renders docs/demo/demo.html into the README demo video",
+  "scripts": {
+    "render": "node render.mjs demo.html out/earmark-demo.mp4",
+    "stills": "node render.mjs demo.html out/stills --stills 2,9.5,22.5,30.8,48,59.5,65.5,76,82"
+  },
+  "devDependencies": {
+    "puppeteer-core": "23.11.1"
+  }
+}

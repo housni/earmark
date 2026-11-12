@@ -1,0 +1,512 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Earmark demo</title>
+<!-- The plugin's real stylesheet, so the replica follows UI changes. -->
+<link rel="stylesheet" href="../../styles.css">
+<style>
+/* Obsidian-like dark theme variables used by earmark.css */
+:root {
+	--background-primary: #1e1e1e;
+	--background-secondary: #262626;
+	--background-modifier-border: #363636;
+	--background-modifier-hover: #333;
+	--background-modifier-error: #fb464c;
+	--text-normal: #dcddde;
+	--text-muted: #9a9a9a;
+	--text-faint: #666;
+	--text-accent: #a197ff;
+	--text-warning: #e0c36b;
+	--interactive-accent: #7f6df2;
+	--color-red: #fb464c;
+	--color-green: #44cf6e;
+	--color-orange: #e9973f;
+	--color-blue: #4c9dff;
+	--tag-background: rgba(127, 109, 242, 0.18);
+	--tag-color: #b4a9ff;
+	--size-2-1: 2px; --size-2-2: 4px; --size-4-1: 4px; --size-4-2: 8px; --size-4-3: 12px;
+	--size-4-4: 16px; --size-4-6: 24px; --size-4-8: 32px;
+	--radius-s: 4px; --radius-m: 8px;
+	--font-ui-small: 13px; --font-ui-smaller: 11.5px;
+	--font-medium: 500; --font-semibold: 600;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #111; }
+body { font-family: "Inter", "Noto Sans", sans-serif; color: var(--text-normal); }
+#app { width: 1280px; height: 720px; position: relative; overflow: hidden; background: var(--background-primary); }
+input, button, .fake-select {
+	background: #2b2b2b; border: 1px solid #424242; color: #ddd; border-radius: 5px;
+	padding: 4px 9px; font: inherit; font-size: 13px; line-height: 1.4;
+}
+button.mod-cta { background: var(--interactive-accent); border-color: transparent; color: #fff; }
+.fake-select { display: inline-block; min-width: 70px; }
+.fake-select::after { content: " ▾"; color: #888; }
+.clickable-icon { display: inline-flex; align-items: center; justify-content: center; border: none; background: transparent; color: #aaa; }
+.clickable-icon svg { width: 16px; height: 16px; }
+h4 { font-size: 15px; }
+
+.ws { display: flex; height: 100%; }
+.sidebar { width: 210px; background: var(--background-secondary); border-right: 1px solid var(--background-modifier-border); padding: 12px 8px; font-size: 13px; }
+.vault { font-weight: 700; margin: 2px 6px 12px; color: #eee; }
+.nav-folder { color: #c8c8c8; padding: 4px 6px; }
+.nav-file { padding: 4px 6px 4px 22px; border-radius: 5px; color: #b8b8b8; margin: 1px 0; }
+.nav-file.is-active { background: #3a3a3a; color: #f2f2f2; }
+.main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.tabbar { height: 38px; background: var(--background-secondary); border-bottom: 1px solid var(--background-modifier-border); display: flex; align-items: flex-end; padding-left: 10px; }
+.tab { background: var(--background-primary); padding: 8px 16px; border-radius: 7px 7px 0 0; font-size: 12.5px; color: #ddd; border: 1px solid var(--background-modifier-border); border-bottom: none; margin-bottom: -1px; }
+.note { flex: 1; overflow: hidden; position: relative; }
+.note-inner { position: absolute; left: 0; right: 0; top: 0; padding: 26px 44px 160px; }
+.inline-title { font-size: 26px; font-weight: 700; margin: 0 0 16px; color: #f0f0f0; }
+
+.modal-bg { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.5); }
+.modal { position: absolute; left: 50%; top: 48%; transform: translate(-50%, -50%); width: 500px; background: var(--background-secondary); border: 1px solid #3c3c3c; border-radius: 12px; padding: 18px 22px 16px; box-shadow: 0 18px 50px rgba(0,0,0,.55); }
+.modal-title { font-size: 17px; font-weight: 650; margin-bottom: 10px; color: #f0f0f0; }
+.srow { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-top: 1px solid #343434; font-size: 13.5px; }
+.srow input, .srow .fake-select { width: 230px; }
+.mbtns { display: flex; justify-content: flex-end; gap: 8px; padding-top: 12px; border-top: 1px solid #343434; }
+.prompt { position: absolute; left: 50%; top: 70px; transform: translateX(-50%); width: 600px; background: var(--background-secondary); border: 1px solid #3c3c3c; border-radius: 12px; box-shadow: 0 18px 50px rgba(0,0,0,.55); overflow: hidden; }
+.prompt input { width: 100%; border: none; border-bottom: 1px solid #383838; border-radius: 0; padding: 14px 16px; font-size: 16px; background: transparent; }
+.sugg { padding: 9px 16px; font-size: 14px; color: #ccc; }
+.sugg.is-selected { background: #3a3a3a; color: #fff; }
+.sugg b { color: var(--text-accent); font-weight: 600; }
+.caret { display: inline-block; width: 1px; height: 1.1em; background: #fff; vertical-align: text-bottom; margin-left: 1px; }
+
+.caption { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); background: rgba(16, 16, 20, 0.93); border: 1px solid #4a4a58; color: #fff; padding: 11px 20px; border-radius: 12px; font-size: 19px; font-weight: 600; white-space: nowrap; box-shadow: 0 10px 30px rgba(0,0,0,.5); display: flex; gap: 12px; align-items: center; }
+.caption .step { background: var(--interactive-accent); border-radius: 999px; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; font-size: 15px; }
+.badge-illu { position: absolute; top: 8px; right: 12px; font-size: 11px; color: #8a8a8a; letter-spacing: .04em; text-transform: uppercase; }
+#cursor { position: absolute; left: 0; top: 0; width: 22px; height: 22px; pointer-events: none; z-index: 50; filter: drop-shadow(0 2px 3px rgba(0,0,0,.6)); }
+.ripple { position: absolute; border-radius: 50%; border: 3px solid rgba(161, 151, 255, .9); pointer-events: none; z-index: 49; }
+.hl-row td { background: rgba(127, 109, 242, 0.14) !important; }
+
+.card-title { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: radial-gradient(ellipse at 50% 40%, #2c2750 0%, #17161f 60%, #111 100%); }
+.card-title .logo { font-size: 74px; font-weight: 800; letter-spacing: -1px; color: #fff; }
+.card-title .logo span { color: var(--text-accent); }
+.card-title .sub { font-size: 24px; color: #cfcfe0; margin-top: 10px; }
+.card-title .small { font-size: 14px; color: #8d8da0; margin-top: 26px; }
+.card-title .pill { display: inline-block; margin: 6px 6px 0; padding: 7px 14px; border-radius: 999px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); font-size: 16px; color: #e8e8f2; }
+.settings-pop { position: absolute; right: 40px; top: 90px; width: 470px; background: var(--background-secondary); border: 1px solid #3c3c3c; border-radius: 12px; padding: 14px 18px; box-shadow: 0 18px 50px rgba(0,0,0,.55); font-size: 13.5px; }
+.settings-pop .crumb { color: #999; font-size: 12px; margin-bottom: 6px; }
+.settings-pop .desc { color: #999; font-size: 12px; margin-top: 3px; max-width: 250px; }
+</style>
+</head>
+<body class="theme-dark">
+<div id="app"></div>
+<script>
+"use strict";
+// ---------- helpers ----------
+const app = document.getElementById("app");
+function h(tag, attrs, ...kids) {
+	const e = document.createElement(tag);
+	for (const [k, v] of Object.entries(attrs || {})) {
+		if (v === false || v == null) continue;
+		if (k === "cls") e.className = v;
+		else e.setAttribute(k, v === true ? "" : v);
+	}
+	for (const k of kids.flat(9)) if (k != null && k !== false) e.append(k.nodeType ? k : document.createTextNode(String(k)));
+	return e;
+}
+const ICONS = {
+	plus: '<circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/>',
+	pencil: '<path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>',
+	trash: '<path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+	right: '<path d="m9 18 6-6-6-6"/>',
+	down: '<path d="m6 9 6 6 6-6"/>',
+};
+function icon(name, id) {
+	const b = h("button", { cls: "clickable-icon budget-icon-btn", id });
+	b.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`;
+	return b;
+}
+const fmt = (n, cur = "LKR") =>
+	new Intl.NumberFormat("en-US", { style: "currency", currency: cur, minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const ease = (x) => (x < 0.5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2);
+const lerp = (a, b, p) => a + (b - a) * p;
+/** Text typed between t0 and t1, with a caret while typing. */
+function typed(str, lt, t0, t1) {
+	const p = clamp((lt - t0) / (t1 - t0));
+	const s = str.slice(0, Math.round(p * str.length));
+	return lt >= t0 && lt < t1 + 0.4 ? [s, h("span", { cls: "caret" })] : [s];
+}
+const at = (lt, t) => lt >= t;
+
+// ---------- Obsidian chrome ----------
+function chrome(active, files, title, content, scroll = 0) {
+	const inner = h("div", { cls: "note-inner", style: `transform: translateY(${-scroll}px)` }, h("div", { cls: "inline-title" }, title), content);
+	return h("div", { cls: "ws" },
+		h("div", { cls: "sidebar" },
+			h("div", { cls: "vault" }, "My vault"),
+			h("div", { cls: "nav-folder" }, "▾ Daily notes"),
+			h("div", { cls: "nav-folder" }, "▾ Earmark"),
+			files.map((f) => h("div", { cls: "nav-file" + (f === active ? " is-active" : "") }, f)),
+			h("div", { cls: "nav-folder" }, "▸ Projects"),
+		),
+		h("div", { cls: "main" },
+			h("div", { cls: "tabbar" }, h("div", { cls: "tab" }, title)),
+			h("div", { cls: "note" }, inner),
+		),
+	);
+}
+function modal(title, rows, saveId, saveText = "Save") {
+	return [
+		h("div", { cls: "modal-bg" }),
+		h("div", { cls: "modal budget-plugin" },
+			h("div", { cls: "modal-title" }, title),
+			rows.map(([label, control]) => h("div", { cls: "srow" }, h("span", {}, label), control)),
+			h("div", { cls: "mbtns" }, h("button", {}, "Cancel"), h("button", { cls: "mod-cta", id: saveId }, saveText)),
+		),
+	];
+}
+function inputBox(id, content, wide = 230) {
+	return h("span", { id, style: `display:inline-block;width:${wide}px;background:#2b2b2b;border:1px solid #4a4a4a;border-radius:5px;padding:4px 9px;font-size:13px;min-height:28px` }, content);
+}
+function selectBox(id, value) {
+	return h("span", { id, cls: "fake-select", style: "width:230px" }, value || "—");
+}
+
+// ---------- data ----------
+const CATALOG = [
+	{ name: "Rent", amount: 100000, cur: "LKR", freq: "Monthly", acct: "Common", cat: "Housing", prio: "High", tags: ["fixed"], exec: "John" },
+	{ name: "Vet", amount: 15000, cur: "LKR", freq: "One-time", acct: "Common", cat: "Pet", prio: "Medium", tags: [], exec: "Jane" },
+	{ name: "Visa fee", amount: 200, cur: "USD", freq: "One-time", acct: "John", cat: "Other", prio: "High", tags: ["visa"], exec: "John" },
+	{ name: "Groceries", amount: 40000, cur: "LKR", freq: "Monthly", acct: "Common", cat: "Food", prio: "Low", tags: [], exec: "Jane" },
+];
+const TIER = { High: "is-high", Medium: "is-medium", Low: "is-low" };
+const prioBadge = (p) => h("span", { cls: `budget-badge budget-priority ${TIER[p] || ""}` }, p);
+
+function catalogView(rows, opts = {}) {
+	const root = h("div", { cls: "budget-plugin budget-catalog" });
+	root.append(h("div", { cls: "budget-filterbar" },
+		h("div", { cls: "budget-toolbar" },
+			h("input", { type: "search", placeholder: "Search…", style: "flex:1" }),
+			h("button", { cls: "budget-filter-toggle" }, "Filters"),
+			h("button", { cls: "mod-cta", id: "add-item" }, "Add item"),
+		)));
+	const table = h("table", { cls: "budget-table" },
+		h("thead", {}, h("tr", {}, ["Name ▲", "Amount", "Frequency", "Account", "Category", "Priority", "Tags", "Executor"].map((c, i) =>
+			h("th", { cls: i === 1 ? "budget-num budget-sortable" : "budget-sortable" }, c)), h("th", {}))),
+		h("tbody", {}, rows.map((r, i) => h("tr", { cls: opts.hl === i ? "hl-row" : "", style: `opacity:${r.op ?? 1}` },
+			h("td", {}, r.name),
+			h("td", { cls: "budget-num" }, fmt(r.amount, r.cur)),
+			h("td", {}, r.freq), h("td", {}, r.acct), h("td", {}, r.cat),
+			h("td", {}, prioBadge(r.prio)),
+			h("td", {}, r.tags.map((t) => h("span", { cls: "budget-tag" }, t))),
+			h("td", {}, r.exec),
+			h("td", { cls: "budget-actions" }, icon("pencil"), icon("trash")),
+		))));
+	root.append(h("div", { cls: "budget-table-wrap" }, table), h("div", { cls: "budget-muted budget-footer" }, `${rows.length} of ${rows.length} items`));
+	return root;
+}
+
+// Budget arithmetic, as in src/money.ts.
+function totals(entries, rate) {
+	const by = {}; const missing = new Set(); let base = 0;
+	for (const { amount, cur } of entries) {
+		if (!amount) continue;
+		by[cur] = (by[cur] || 0) + amount;
+		if (cur === "LKR") base += amount; else if (rate) base += amount * rate; else missing.add(cur);
+	}
+	return { by, base: missing.size ? null : base, missing: [...missing] };
+}
+function budgetView(st) {
+	const items = CATALOG.map((c, i) => ({ ...c, id: ["rent", "vet", "visa", "groc"][i], tx: st.tx[["rent", "vet", "visa", "groc"][i]] || [] }));
+	const spent = (i) => i.tx.reduce((s, t) => s + t.amount, 0);
+	const visible = st.filterExec ? items.filter((i) => i.exec === st.filterExec) : items;
+	const per = (list, f) => list.map((i) => ({ amount: f(i), cur: i.cur }));
+	const credits = st.credits.map((c) => ({ amount: c.amount, cur: c.cur }));
+	const S = (list) => ({
+		cost: totals(per(list, (i) => i.amount), st.rate),
+		spent: totals(per(list, spent), st.rate),
+		toSpend: totals(per(list, (i) => Math.max(i.amount - spent(i), 0)), st.rate),
+		over: totals(per(list, (i) => Math.max(spent(i) - i.amount, 0)), st.rate),
+	});
+	const whole = S(items), vis = S(visible);
+	const credit = totals(credits, st.rate);
+	const net = totals([...credits, ...per(items, (i) => -(spent(i) + Math.max(i.amount - spent(i), 0)))], st.rate);
+
+	const root = h("div", { cls: "budget-plugin budget-view" + (st.cvd ? " budget-cvd budget-cvd-redgreen" : "") });
+	root.append(h("div", { cls: "budget-header" },
+		h("h3", {}, "November 2026"),
+		h("div", { cls: "budget-toolbar" },
+			h("span", { cls: "fake-select" }, "LKR"),
+			h("button", {}, "Open catalog"),
+			h("button", { cls: "mod-cta" }, "Add from catalog"),
+			h("button", {}, "Add custom item"),
+			h("button", {}, "Refresh from catalog"),
+		)));
+	if (st.filterExec) {
+		root.append(h("div", { cls: "budget-filter-note" },
+			`Filtered: ${visible.length} of ${items.length} items. Credits and surplus/shortfall are for the whole budget. `,
+			h("a", { href: "#", id: "clear-note", style: "color:var(--text-accent)" }, "Clear filters")));
+	}
+	const s = st.filterExec ? vis : whole;
+	const cards = h("div", { cls: "budget-cards" });
+	const card = (label, t, cls = "") => {
+		const c = h("div", { cls: `budget-card ${cls}` },
+			h("div", { cls: "budget-card-label" }, label),
+			h("div", { cls: "budget-card-value" }, t.base === null ? "—" : fmt(t.base)));
+		const curs = Object.keys(t.by);
+		if (curs.length > 1 || (curs.length === 1 && curs[0] !== "LKR")) c.append(h("div", { cls: "budget-card-sub" }, curs.sort().map((k) => fmt(t.by[k], k)).join(" + ")));
+		if (t.missing.length) c.append(h("div", { cls: "budget-card-warn" }, "Needs a rate for ", h("a", { href: "#", cls: "rate-link" }, t.missing[0])));
+		cards.append(c);
+	};
+	card("Total cost", s.cost); card("Spent", s.spent); card("To be spent", s.toSpend);
+	if (Object.keys(s.over.by).length) card("Overspent", s.over, "budget-neg");
+	card("Credits", credit);
+	const n = net.base ?? 0;
+	card(n < 0 ? "Shortfall" : "Surplus", net, n < 0 ? "budget-neg" : "budget-pos");
+	root.append(cards);
+
+	root.append(h("div", { cls: "budget-section-head" }, h("h4", {}, "Items")));
+	const fb = h("div", { cls: "budget-filterbar" }, h("div", { cls: "budget-toolbar" },
+		h("input", { type: "search", placeholder: "Search…", style: "flex:1" }),
+		h("button", { cls: "budget-filter-toggle" + (st.filterExec ? " is-active" : ""), id: "filters-btn" }, st.filterExec ? "Filters (1)" : "Filters"),
+		st.filterExec ? h("button", { id: "clear-btn" }, "Clear") : null));
+	if (st.filterOpen) {
+		const f = (label, value, id) => h("label", { cls: "budget-filter-field" }, h("span", { cls: "budget-filter-label" }, label), h("span", { cls: "fake-select", id, style: value !== "Any" ? "border-color:var(--interactive-accent)" : "" }, value));
+		fb.append(h("div", { cls: "budget-filter-panel" },
+			f("Category", "Any"), f("Account", "Any"), f("Executor", st.filterExec || "Any", "exec-select"), f("Priority", "Any"), f("Status", "Any"),
+			h("label", { cls: "budget-filter-field" }, h("span", { cls: "budget-filter-label" }, "Amount"), h("div", { cls: "budget-filter-range" }, h("input", { placeholder: "min" }), h("input", { placeholder: "max" }))),
+		));
+	}
+	root.append(fb);
+
+	const table = h("table", { cls: "budget-table" },
+		h("thead", {}, h("tr", {}, ["", "Name", "Priority", "Category", "Executor", "Allocated", "Spent", "Balance", "", ""].map((c, i) =>
+			h("th", { cls: i >= 5 && i <= 7 ? "budget-num" : "" }, c)))));
+	const body = h("tbody");
+	for (const it of visible) {
+		const sp = spent(it), bal = it.amount - sp;
+		const ratio = it.amount > 0 ? sp / it.amount : 0;
+		const tr = h("tr", { cls: (bal < 0 ? "budget-over" : "") + (st.hl === it.id ? " hl-row" : "") },
+			h("td", { cls: "budget-toggle" }, icon(st.expanded === it.id ? "down" : "right", `chev-${it.id}`)),
+			h("td", {}, it.name),
+			h("td", {}, prioBadge(it.prio)),
+			h("td", {}, it.cat), h("td", {}, it.exec),
+			h("td", { cls: "budget-num" }, h("input", { cls: "budget-amount-input", value: String(it.amount), style: "width:6.5em" }), it.cur !== "LKR" ? h("span", { cls: "budget-muted" }, ` ${it.cur}`) : null),
+			h("td", { cls: "budget-num" }, fmt(sp, it.cur)),
+			h("td", { cls: "budget-num budget-balance" }, fmt(bal, it.cur)),
+			h("td", { cls: "budget-progress-cell" }, h("div", { cls: "budget-progress" }, h("div", { cls: "budget-progress-fill" + (ratio > 1 ? " is-over" : ""), style: `--budget-fill:${Math.min(ratio, 1) * 100}%` }))),
+			h("td", { cls: "budget-actions" }, icon("plus", `add-${it.id}`), icon("pencil"), icon("trash")),
+		);
+		body.append(tr);
+		if (st.expanded === it.id) {
+			body.append(h("tr", { cls: "budget-subrow" }, h("td", { colspan: "10" },
+				h("table", { cls: "budget-table budget-log" }, it.tx.map((t) => h("tr", {},
+					h("td", {}, t.date), h("td", { cls: "budget-num" }, fmt(t.amount, it.cur)), h("td", { cls: "budget-muted" }, t.note),
+					h("td", { cls: "budget-actions" }, icon("pencil"), icon("trash"))))))));
+		}
+	}
+	table.append(body);
+	root.append(h("div", { cls: "budget-table-wrap" }, table));
+
+	root.append(h("div", { cls: "budget-section-head", id: "credits-head" }, h("h4", {}, "Credits"), h("button", { id: "add-credit" }, "Add credit")));
+	if (!st.credits.length) root.append(h("div", { cls: "budget-empty" }, "Add the money available for this budget: bank accounts, rebates, salary…"));
+	else root.append(h("div", { cls: "budget-table-wrap" }, h("table", { cls: "budget-table" },
+		h("thead", {}, h("tr", {}, h("th", {}, "Source"), h("th", { cls: "budget-num" }, "Amount"), h("th", {}, "Note"), h("th", {}))),
+		h("tbody", {}, st.credits.map((c) => h("tr", {}, h("td", {}, c.source), h("td", { cls: "budget-num" }, fmt(c.amount, c.cur)), h("td", { cls: "budget-muted" }, c.note || ""), h("td", { cls: "budget-actions" }, icon("pencil"), icon("trash"))))))));
+
+	root.append(h("div", { cls: "budget-section-head", id: "rates-head" }, h("h4", {}, "Exchange rates")));
+	root.append(h("div", { cls: "budget-rates" }, h("div", { cls: "budget-rate" + (st.rateHl ? " is-highlighted" : "") },
+		h("span", {}, "1 USD ="),
+		h("span", { id: "rate-input", cls: "budget-amount-input", style: "display:inline-block;width:7em;text-align:right;background:#2b2b2b;border:1px solid #4a4a4a;border-radius:5px;padding:4px 9px;min-height:28px" }, st.rateText ?? (st.rate ? String(st.rate) : h("span", { style: "color:#777" }, "rate"))),
+		h("span", {}, "LKR"))));
+	return root;
+}
+
+// ---------- scenes ----------
+// Each scene renders its DOM for local time lt and declares cursor keyframes
+// {t, sel, click} meaning "be over sel at time t". Everything is a pure function of time.
+const FILES_BEFORE = ["Catalog"];
+const FILES_AFTER = ["2026-11 November", "Catalog"];
+const BASE = { rate: 0, tx: {}, credits: [] };
+const TX_RENT = [{ date: "2026-11-03", amount: 100000, note: "paid" }];
+const TX_VET = [{ date: "2026-11-05", amount: 5000, note: "check-up" }, { date: "2026-11-09", amount: 12000, note: "surgery" }];
+const CREDITS = [{ source: "Bank account", amount: 250000, cur: "LKR" }, { source: "Tax rebate", amount: 100, cur: "USD" }];
+
+const scenes = [
+	{ dur: 4.5, cursor: false, render(lt) {
+		const op = clamp(lt / 0.8) * clamp((4.5 - lt) / 0.5);
+		return h("div", { cls: "card-title", style: `opacity:${op}` },
+			h("div", { cls: "logo" }, "Ear", h("span", {}, "mark")),
+			h("div", { cls: "sub" }, "Plan and track budgets inside your Obsidian notes"),
+			h("div", { cls: "small" }, "A quick tour · illustration of the plugin's screens"));
+	} },
+	{ dur: 12, step: 1, caption: "Keep a catalog of everything you budget for", render(lt) {
+		const rows = CATALOG.slice(0, 3).map((r, i) => ({ ...r, op: clamp((lt - 0.2 - i * 0.3) / 0.4) }));
+		if (at(lt, 7.3)) rows.push({ ...CATALOG[3], op: clamp((lt - 7.3) / 0.4) });
+		const page = chrome("Catalog", FILES_BEFORE, "Catalog", catalogView(rows, { hl: at(lt, 7.3) && lt < 10 ? 3 : null }));
+		const parts = [page];
+		if (lt >= 2.7 && lt < 7.3) {
+			parts.push(...modal("New item", [
+				["Name", inputBox("f-name", typed("Groceries", lt, 3.0, 3.7))],
+				["Amount", h("span", {}, inputBox("f-amount", typed("40000", lt, 3.9, 4.4), 140), " ", h("span", { cls: "fake-select", style: "width:82px" }, "LKR"))],
+				["Frequency", selectBox("f-freq", at(lt, 4.7) ? "Monthly" : "")],
+				["Category", selectBox("f-category", at(lt, 5.2) ? "Food" : "")],
+				["Priority", selectBox("f-prio", at(lt, 5.6) ? "Low" : "")],
+				["Executor", selectBox("f-exec", at(lt, 6.0) ? "Jane" : "")],
+			], "f-save"));
+		}
+		return parts;
+	}, keys: [{ t: 0.8, sel: ".nav-file.is-active" }, { t: 2.5, sel: "#add-item", click: true }, { t: 3.0, sel: "#f-name" }, { t: 3.9, sel: "#f-amount" },
+		{ t: 4.7, sel: "#f-freq", click: true }, { t: 5.2, sel: "#f-category", click: true }, { t: 5.6, sel: "#f-prio", click: true }, { t: 6.0, sel: "#f-exec", click: true },
+		{ t: 6.9, sel: "#f-save", click: true }, { t: 8.6, sel: ".hl-row td" }] },
+	{ dur: 11, step: 2, caption: "Create a budget and pick items from the catalog", render(lt) {
+		if (lt >= 8.4) return [chrome("2026-11 November", FILES_AFTER, "2026-11 November", budgetView(BASE))];
+		const parts = [chrome("Catalog", FILES_BEFORE, "Catalog", catalogView(CATALOG))];
+		if (lt >= 0.4 && lt < 2.5) {
+			parts.push(h("div", { cls: "modal-bg" }), h("div", { cls: "prompt" },
+				h("div", { style: "padding:13px 16px;font-size:16px;border-bottom:1px solid #383838" }, typed("new budget", lt, 0.7, 1.6)),
+				at(lt, 1.2) ? [h("div", { cls: "sugg is-selected", id: "sugg-new" }, h("b", {}, "Earmark: New budget")),
+					h("div", { cls: "sugg" }, "Earmark: Add items from catalog to current budget")] : h("div", { cls: "sugg" }, "Earmark: Open or create budget catalog")));
+		}
+		if (lt >= 2.5 && lt < 4.2) {
+			parts.push(h("div", { cls: "modal-bg" }), h("div", { cls: "modal" },
+				h("div", { cls: "modal-title" }, "New budget"),
+				h("div", { style: "padding:8px 0 12px" }, h("span", { style: "display:block;background:rgba(127,109,242,.35);border:1px solid #6b5fd0;border-radius:5px;padding:6px 10px;font-size:14px" }, "2026-11 November")),
+				h("div", { cls: "mbtns" }, h("button", {}, "Cancel"), h("button", { cls: "mod-cta", id: "prompt-ok" }, "OK"))));
+		}
+		if (lt >= 4.2 && lt < 8.4) {
+			const checks = [5.0, 5.55, 6.1, 6.65].map((t) => at(lt, t));
+			const n = checks.filter(Boolean).length;
+			parts.push(h("div", { cls: "modal-bg" }), h("div", { cls: "modal budget-plugin budget-picker", style: "width:600px" },
+				h("div", { cls: "modal-title" }, "Add items from catalog"),
+				h("div", { cls: "budget-toolbar" }, h("input", { type: "search", placeholder: "Search…", style: "flex:1" }), h("button", {}, "Filters"), h("button", {}, "Select visible")),
+				h("div", { cls: "budget-pick-list" }, CATALOG.map((c, i) => h("label", { cls: "budget-pick-row", id: `pick-${i}` },
+					h("input", { type: "checkbox", checked: checks[i], style: `accent-color:#7f6df2;width:16px;height:16px` }),
+					h("div", { cls: "budget-pick-text" }, h("div", { cls: "budget-pick-name" }, c.name, " ", prioBadge(c.prio)), h("div", { cls: "budget-muted" }, [c.cat, c.acct, c.freq, c.exec].join(" · "))),
+					h("div", { cls: "budget-num" }, fmt(c.amount, c.cur))))),
+				h("div", { cls: "mbtns", style: "border-top:none" }, h("button", {}, "Cancel"), h("button", { cls: "mod-cta", id: "pick-add" }, n ? `Add ${n} item${n > 1 ? "s" : ""}` : "Add selected"))));
+		}
+		return parts;
+	}, keys: [{ t: 0.4, sel: ".hl-row td, .budget-table tbody tr:last-child td" }, { t: 2.2, sel: "#sugg-new", click: true }, { t: 3.8, sel: "#prompt-ok", click: true },
+		{ t: 5.0, sel: "#pick-0 input", click: true }, { t: 5.55, sel: "#pick-1 input", click: true }, { t: 6.1, sel: "#pick-2 input", click: true }, { t: 6.65, sel: "#pick-3 input", click: true },
+		{ t: 7.8, sel: "#pick-add", click: true }, { t: 9.6, sel: ".budget-card-warn" }] },
+	{ dur: 9.5, step: 3, caption: "Totals in your base currency. A missing exchange rate is one click away", render(lt) {
+		const scroll = lerp(0, 330, ease(clamp((lt - 2.2) / 0.6))) - lerp(0, 330, ease(clamp((lt - 5.4) / 0.6)));
+		const rateText = at(lt, 2.9) ? typed("300", lt, 3.0, 3.5) : null;
+		const st = { ...BASE, rate: at(lt, 4.1) ? 300 : 0, rateText: at(lt, 4.1) ? null : rateText, rateHl: lt >= 2.2 && lt < 4.6 };
+		return [chrome("2026-11 November", FILES_AFTER, "2026-11 November", budgetView(st), scroll)];
+	}, keys: [{ t: 1.8, sel: ".rate-link", click: true }, { t: 2.9, sel: "#rate-input", click: true }, { t: 4.1, sel: "#rate-input" }, { t: 6.4, sel: ".budget-card" }, { t: 7.5, sel: ".budget-card:nth-child(1) .budget-card-value" }] },
+	{ dur: 13, step: 4, caption: "Log spending as it happens", render(lt) {
+		const tx = {};
+		if (at(lt, 3.2)) tx.rent = TX_RENT;
+		if (at(lt, 5.9)) tx.vet = TX_VET.slice(0, at(lt, 8.1) ? 2 : 1);
+		const st = { ...BASE, rate: 300, tx, expanded: at(lt, 9.3) ? "vet" : null, hl: lt >= 8.1 && lt < 9.3 ? "vet" : null };
+		const parts = [chrome("2026-11 November", FILES_AFTER, "2026-11 November", budgetView(st))];
+		const tm = (title, amount, t0, date) => parts.push(...modal(title, [
+			["Amount", inputBox("t-amount", typed(amount, lt, t0 + 0.3, t0 + 0.9))],
+			["Date", inputBox("t-date", date)],
+			["Note", inputBox("t-note", "")],
+		], "t-save"));
+		if (lt >= 1.2 && lt < 3.2) tm("Spend on Rent", "100000", 1.2, "2026-11-03");
+		if (lt >= 4.2 && lt < 5.9) tm("Spend on Vet", "5000", 4.2, "2026-11-05");
+		if (lt >= 6.6 && lt < 8.1) tm("Spend on Vet", "12000", 6.6, "2026-11-09");
+		return parts;
+	}, keys: [{ t: 1.0, sel: "#add-rent", click: true }, { t: 1.5, sel: "#t-amount" }, { t: 2.8, sel: "#t-save", click: true },
+		{ t: 4.0, sel: "#add-vet", click: true }, { t: 4.5, sel: "#t-amount" }, { t: 5.6, sel: "#t-save", click: true },
+		{ t: 6.4, sel: "#add-vet", click: true }, { t: 6.9, sel: "#t-amount" }, { t: 7.8, sel: "#t-save", click: true },
+		{ t: 9.1, sel: "#chev-vet", click: true }, { t: 10.6, sel: ".budget-over .budget-balance" }] },
+	{ dur: 10.5, step: 5, caption: "Add the money you have: bank accounts, rebates, salary", render(lt) {
+		const n = at(lt, 7.3) ? 2 : at(lt, 4.2) ? 1 : 0;
+		const scroll = lerp(0, 300, ease(clamp((lt - 0.3) / 0.7))) - lerp(0, 300, ease(clamp((lt - 7.9) / 0.6)));
+		const st = { ...BASE, rate: 300, tx: { rent: TX_RENT, vet: TX_VET }, credits: CREDITS.slice(0, n) };
+		const parts = [chrome("2026-11 November", FILES_AFTER, "2026-11 November", budgetView(st), scroll)];
+		const cm = (src, amount, cur, t0) => parts.push(...modal("Add credit", [
+			["Source", inputBox("c-src", typed(src, lt, t0 + 0.3, t0 + 1.1))],
+			["Amount", h("span", {}, inputBox("c-amount", typed(amount, lt, t0 + 1.3, t0 + 1.8), 140), " ", h("span", { cls: "fake-select", id: "c-cur", style: "width:82px" }, cur))],
+			["Note", inputBox("c-note", "")],
+		], "c-save"));
+		if (lt >= 1.7 && lt < 4.2) cm("Bank account", "250000", "LKR", 1.7);
+		if (lt >= 5.0 && lt < 7.3) cm("Tax rebate", "100", at(lt, 6.6) ? "USD" : "LKR", 5.0);
+		return parts;
+	}, keys: [{ t: 1.5, sel: "#add-credit", click: true }, { t: 2.0, sel: "#c-src" }, { t: 3.0, sel: "#c-amount" }, { t: 3.9, sel: "#c-save", click: true },
+		{ t: 4.8, sel: "#add-credit", click: true }, { t: 5.3, sel: "#c-src" }, { t: 6.6, sel: "#c-cur", click: true }, { t: 7.0, sel: "#c-save", click: true },
+		{ t: 8.9, sel: ".budget-card.budget-pos .budget-card-value" }] },
+	{ dur: 9.5, step: 6, caption: "Filter by any field. The totals follow the filter", render(lt) {
+		const st = { ...BASE, rate: 300, tx: { rent: TX_RENT, vet: TX_VET }, credits: CREDITS, filterOpen: lt >= 1.0 && lt < 7.6, filterExec: lt >= 2.5 && lt < 7.6 ? "Jane" : null };
+		return [chrome("2026-11 November", FILES_AFTER, "2026-11 November", budgetView(st))];
+	}, keys: [{ t: 0.9, sel: "#filters-btn", click: true }, { t: 2.3, sel: "#exec-select", click: true }, { t: 4.2, sel: ".budget-filter-note" }, { t: 5.4, sel: ".budget-card .budget-card-value" },
+		{ t: 7.4, sel: "#clear-note, #clear-btn", click: true }, { t: 8.8, sel: ".budget-card" }] },
+	{ dur: 9, step: 7, caption: "Colour-blind friendly modes add shapes and labels", render(lt) {
+		const st = { ...BASE, rate: 300, tx: { rent: TX_RENT, vet: TX_VET }, credits: CREDITS, cvd: at(lt, 2.9) };
+		const parts = [chrome("2026-11 November", FILES_AFTER, "2026-11 November", budgetView(st))];
+		if (lt >= 0.5 && lt < 2.9) {
+			parts.push(h("div", { cls: "settings-pop" },
+				h("div", { cls: "crumb" }, "Settings › Earmark › Display"),
+				h("div", { cls: "srow", style: "border-top:none" },
+					h("div", {}, h("div", {}, "Colour vision"), h("div", { cls: "desc" }, "Any option other than Standard also adds shapes and labels.")),
+					h("span", { cls: "fake-select", id: "cvd-select", style: "width:190px" }, at(lt, 1.9) ? "Red-green" : "Standard"))));
+		}
+		return parts;
+	}, keys: [{ t: 1.5, sel: "#cvd-select", click: true }, { t: 1.9, sel: "#cvd-select" }, { t: 4.3, sel: ".budget-priority.is-high" }, { t: 5.8, sel: ".budget-over .budget-balance" }, { t: 7.3, sel: ".budget-card.budget-pos .budget-card-label" }] },
+	{ dur: 6.5, cursor: false, render(lt) {
+		const op = clamp(lt / 0.6) * clamp((6.5 - lt) / 0.6);
+		return h("div", { cls: "card-title", style: `opacity:${op}` },
+			h("div", { cls: "logo" }, "Ear", h("span", {}, "mark")),
+			h("div", { cls: "sub" }, "Your catalog and budgets live in your notes, as plain YAML"),
+			h("div", { style: "margin-top:26px" },
+				h("span", { cls: "pill" }, "Install with BRAT: housni/earmark"),
+				h("span", { cls: "pill" }, "github.com/housni/earmark")),
+			h("div", { cls: "small" }, "Illustration: the real Obsidian interface may differ slightly"));
+	} },
+];
+let acc = 0;
+for (const s of scenes) { s.start = acc; acc += s.dur; }
+window.TOTAL = acc;
+
+// ---------- cursor ----------
+const CURSOR_SVG = '<svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 2l7.5 19 2.6-7.9L21 10.5z" fill="#fff" stroke="#111" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+const known = new Map(); // "scene:key" -> last measured point
+function center(sel) {
+	const el = app.querySelector(sel);
+	if (!el) return null;
+	const r = el.getBoundingClientRect(), a = app.getBoundingClientRect();
+	if (!r.width && !r.height) return null;
+	return { x: r.left - a.left + Math.min(r.width / 2, 40), y: r.top - a.top + r.height / 2 };
+}
+function cursorAt(si, scene, lt) {
+	const keys = scene.keys || [];
+	if (!keys.length) return null;
+	keys.forEach((k, i) => { const p = center(k.sel); if (p) known.set(`${si}:${i}`, p); });
+	const pt = (i) => known.get(`${si}:${i}`) || known.get(`${si}:${i - 1}`) || { x: 640, y: 360 };
+	let i = keys.findIndex((k) => k.t > lt);
+	if (i === -1) return { ...pt(keys.length - 1) };
+	if (i === 0) return { ...pt(0) };
+	const prev = pt(i - 1), next = pt(i);
+	const move = Math.min(0.65, keys[i].t - keys[i - 1].t);
+	const p = ease(clamp((lt - (keys[i].t - move)) / move));
+	return { x: lerp(prev.x, next.x, p), y: lerp(prev.y, next.y, p) };
+}
+
+// ---------- seek ----------
+window.seek = function (t) {
+	let si = scenes.findIndex((s) => t < s.start + s.dur);
+	if (si === -1) si = scenes.length - 1;
+	const scene = scenes[si];
+	const lt = t - scene.start;
+	app.replaceChildren(...[scene.render(lt)].flat());
+	if (scene.caption) {
+		const op = clamp(lt / 0.4) * clamp((scene.dur - lt) / 0.3);
+		app.append(h("div", { cls: "caption", style: `opacity:${op}` }, h("span", { cls: "step" }, scene.step), scene.caption));
+		app.append(h("div", { cls: "badge-illu" }, "Illustration"));
+	}
+	if (scene.cursor !== false) {
+		const p = cursorAt(si, scene, lt);
+		if (p) {
+			for (const k of scene.keys) {
+				if (!k.click || lt < k.t || lt > k.t + 0.35) continue;
+				const q = (lt - k.t) / 0.35, r = 6 + q * 22;
+				app.append(h("div", { cls: "ripple", style: `left:${p.x - r}px;top:${p.y - r}px;width:${2 * r}px;height:${2 * r}px;opacity:${1 - q}` }));
+			}
+			const c = h("div", { id: "cursor", style: `transform:translate(${p.x - 3}px,${p.y - 2}px)` });
+			c.innerHTML = CURSOR_SVG;
+			app.append(c);
+		}
+	}
+};
+window.seek(0);
+</script>
+</body>
+</html>
