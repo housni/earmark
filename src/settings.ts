@@ -1,5 +1,16 @@
 import { App, Notice, PluginSettingTab, Setting } from "obsidian";
-import { BudgetSettings, COLOR_VISIONS, ColorVision, DEFAULT_TITLE_FORMAT, SORTED_LISTS, sortedList } from "./config";
+import {
+	BudgetSettings,
+	COLOR_VISIONS,
+	ColorVision,
+	DEFAULT_CATALOG_NAME,
+	DEFAULT_TITLE_FORMAT,
+	SORTED_LISTS,
+	catalogPathOf,
+	cleanFolder,
+	cleanNoteName,
+	sortedList,
+} from "./config";
 import { ColorVisionModal } from "./modals/ColorVisionModal";
 import type BudgetPlugin from "./main";
 
@@ -82,25 +93,31 @@ export class BudgetSettingTab extends PluginSettingTab {
 
 		this.heading("Notes");
 
-		new Setting(containerEl)
+		const where = new Setting(containerEl)
+			.setName("Folder")
+			.setDesc("Where Earmark keeps your catalog and creates new budgets. Leave empty for the top of your vault. ");
+		const catalog = new Setting(containerEl)
 			.setName("Catalog note")
-			.setDesc("Path of the note that holds your budget catalog.")
-			.addText((t) =>
-				t.setValue(s.catalogPath).onChange(async (v) => {
-					s.catalogPath = v.trim();
-					await this.plugin.saveSettings();
-				}),
-			);
-
-		new Setting(containerEl)
-			.setName("Budgets folder")
-			.setDesc("Where new budget notes are created.")
-			.addText((t) =>
-				t.setValue(s.budgetsFolder).onChange(async (v) => {
-					s.budgetsFolder = v.trim();
-					await this.plugin.saveSettings();
-				}),
-			);
+			.setDesc("Name of the note in that folder that holds your budget catalog. ");
+		const pathEl = catalog.descEl.createEl("div");
+		pathEl.appendText("Catalog: ");
+		const pathValue = pathEl.createEl("b", { cls: "u-pop" });
+		const showPath = () => pathValue.setText(catalogPathOf(s));
+		where.addText((t) =>
+			t.setPlaceholder("Vault root").setValue(s.folder).onChange(async (v) => {
+				s.folder = cleanFolder(v);
+				showPath();
+				await this.plugin.saveSettings();
+			}),
+		);
+		catalog.addText((t) =>
+			t.setPlaceholder(DEFAULT_CATALOG_NAME).setValue(s.catalogName).onChange(async (v) => {
+				s.catalogName = cleanNoteName(v);
+				showPath();
+				await this.plugin.saveSettings();
+			}),
+		);
+		showPath();
 
 		const title = new Setting(containerEl)
 			.setName("Budget title format")

@@ -46,7 +46,7 @@ Then in Obsidian:
 2. Click the refresh icon next to *Installed plugins* and turn on **Earmark**.
 3. Press **Ctrl/Cmd+Shift+I** to open the developer console. Keep it open, because errors from the plugin appear there.
 
-To remove it, turn the plugin off, delete `.obsidian/plugins/earmark`, and delete the `Budgets/` test notes.
+To remove it, turn the plugin off, delete `.obsidian/plugins/earmark`, and delete the `Earmark/` test notes.
 
 ### Rebuilding while you work
 - `npm run dev` (or the Docker command above with `npm run dev` and `-it`) rebuilds `main.js` on every save.
@@ -74,7 +74,7 @@ The walkthrough uses Sri Lankan rupees (LKR) as the base currency and US dollars
 |---|---|
 | Default base currency | `LKR` |
 | Currencies | should list `USD, EUR, GBP, KES, LKR`. On an existing install, `KES` and `LKR` are added once, automatically, the first time this version loads. |
-| Budgets folder / Catalog note | leave as `Budgets` and `Budgets/_Catalog.md`, or point them at a scratch folder |
+| Folder / Catalog note | leave as `Earmark` and `Catalog`, or use a scratch folder. The line under *Catalog note* shows the full path, e.g. **Catalog: Earmark/Catalog.md**, and updates as you type. Stray slashes and a typed `.md` are ignored. An install from before this version keeps its old location, e.g. folder `Budgets` with note `_Catalog`, so existing notes are still found. |
 
 The lists under **Lists** fill the dropdowns in the item form. Each one has a description under its name. The defaults are:
 
@@ -99,7 +99,7 @@ How numbers are displayed (symbols, separators) depends on your system locale, o
 
 ### 4.1 Catalog
 1. Open the command palette (**Ctrl/Cmd+P**) and run **Earmark: Open or create budget catalog**.
-   - You should see that `Budgets/_Catalog.md` is created and opened.
+   - You should see that `Earmark/Catalog.md` is created and opened.
    - In Reading view or Live Preview, it shows a toolbar (search, filters, **Add item**) and "No items yet."
 2. Click **Add item** and create these items:
 
@@ -128,7 +128,7 @@ How numbers are displayed (symbols, separators) depends on your system locale, o
 1. In **Settings → Earmark → Budget title format**, try `YYYYMMDD`. The "Today:" sample under the setting updates as you type, for example `20261112`. Clear the box: the sample shows the default format, `2026-11 November`. Leave it empty or set it back to `YYYY-MM MMMM`.
 2. Run **Earmark: New budget**. The suggested title follows the format, for example `2026-11 November`. Accept it, or type your own.
 3. In the picker, check that you can search and use the same **Filters** panel, and that **Select visible** selects only what's shown. The submit button counts selected items ("Add 3 items"). Select all three and confirm.
-   - You should see `Budgets/<title>.md` created and opened.
+   - You should see `Earmark/<title>.md` created and opened, in the same folder as the catalog.
    - It has a header with the title, a base-currency dropdown, and the buttons **Open catalog**, **Add from catalog**, **Add custom item** and **Refresh from catalog**.
    - **Open catalog** opens the catalog note, the same as the command does. Go back to the budget afterwards.
 4. With no exchange rate yet, the *Total cost* card shows **—**. Below it are per-currency subtotals (115,000 LKR + 200 USD) and **"Needs a rate for USD"**, with **USD** as a link.

@@ -3,7 +3,7 @@ import { ConfirmModal, TextPromptModal } from "./modals/common";
 import { PickItemsModal } from "./modals/PickItemsModal";
 import { formatDate } from "./dates";
 import { catalogNeedsIds, errorMessage, findBlocks, normalizeBudget, normalizeCatalog, refreshItem, snapshotItem } from "./model";
-import { BudgetSettings, ColorVision, migrateSettings } from "./config";
+import { BudgetSettings, ColorVision, catalogPathOf, cleanFolder, migrateSettings } from "./config";
 import { BudgetSettingTab } from "./settings";
 import { toYaml, updateBlock } from "./store";
 import { BUDGET_LANG, Budget, CATALOG_LANG, CatalogItem } from "./types";
@@ -60,7 +60,7 @@ export default class BudgetPlugin extends Plugin {
 	}
 
 	private catalogFile(): TFile | null {
-		const f = this.app.vault.getAbstractFileByPath(normalizePath(this.settings.catalogPath));
+		const f = this.app.vault.getAbstractFileByPath(normalizePath(catalogPathOf(this.settings)));
 		return f instanceof TFile ? f : null;
 	}
 
@@ -68,7 +68,7 @@ export default class BudgetPlugin extends Plugin {
 	async loadCatalog(): Promise<CatalogItem[]> {
 		const file = this.catalogFile();
 		if (!file) {
-			throw new Error(`No catalog at “${this.settings.catalogPath}”. Run “Open or create budget catalog” or fix the path in settings.`);
+			throw new Error(`No catalog at “${catalogPathOf(this.settings)}”. Run “Open or create budget catalog” or check the folder in settings.`);
 		}
 		const block = findBlocks(await this.app.vault.read(file), CATALOG_LANG)[0];
 		if (!block) throw new Error(`“${file.path}” has no ${CATALOG_LANG} block.`);
@@ -88,7 +88,7 @@ export default class BudgetPlugin extends Plugin {
 	async openCatalog(): Promise<void> {
 		let file = this.catalogFile();
 		if (!file) {
-			const path = normalizePath(this.settings.catalogPath);
+			const path = normalizePath(catalogPathOf(this.settings));
 			await this.ensureFolder(path.split("/").slice(0, -1).join("/"));
 			file = await this.app.vault.create(path, `# Budget catalog\n\n\`\`\`${CATALOG_LANG}\nitems: []\n\`\`\`\n`);
 		}
@@ -105,7 +105,9 @@ export default class BudgetPlugin extends Plugin {
 
 	private async createBudget(title: string): Promise<void> {
 		try {
-			const path = normalizePath(`${this.settings.budgetsFolder}/${title.replace(/[\\/:*?"<>|#^[\]]/g, "-")}.md`);
+			const folder = cleanFolder(this.settings.folder);
+			const name = `${title.replace(/[\\/:*?"<>|#^[\]]/g, "-")}.md`;
+			const path = normalizePath(folder ? `${folder}/${name}` : name);
 			const existingFile = this.app.vault.getAbstractFileByPath(path);
 			if (existingFile instanceof TFile) {
 				new Notice(`“${path}” already exists.`);
@@ -129,7 +131,7 @@ export default class BudgetPlugin extends Plugin {
 				items: picked.map((i) => snapshotItem(i, base)),
 				credits: [],
 			};
-			await this.ensureFolder(this.settings.budgetsFolder);
+			await this.ensureFolder(folder);
 			const yaml = toYaml(budget).replace(/\s+$/, "");
 			const file = await this.app.vault.create(path, `\`\`\`${BUDGET_LANG}\n${yaml}\n\`\`\`\n`);
 			await this.app.workspace.getLeaf(false).openFile(file);
