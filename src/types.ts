@@ -15,7 +15,13 @@ export interface ItemFields {
 	manager: string;
 }
 
-export interface CatalogItem extends ItemFields {
+/** ISO timestamps, or "" for items written before dates were tracked. */
+export interface Stamps {
+	created: string;
+	modified: string;
+}
+
+export interface CatalogItem extends ItemFields, Stamps {
 	id: string;
 }
 
@@ -30,7 +36,7 @@ export interface Transaction {
 	note: string;
 }
 
-export interface BudgetItem extends ItemFields {
+export interface BudgetItem extends ItemFields, Stamps {
 	id: string;
 	/** Id of the catalog item this was snapshotted from. */
 	sourceId?: string;

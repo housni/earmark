@@ -20,6 +20,7 @@ Obsidian plugin for budget planning and tracking. Data lives in notes as YAML in
 
 ## Conventions
 - Mutate rows by `id` (items, transactions, credits), never by index.
+- Items carry `created`/`modified` ISO timestamps. Any change to an item sets `modified` (`saveItem` in BudgetView does it for budget items; snapshots get their own dates; refresh keeps `created`). Sorting lives in `sortItems` in `model.ts` (blanks last).
 - Normalizers spread the raw object first so hand-added YAML keys survive saves; `toPlain` drops empty fields below top level.
 - Budget items are snapshots of catalog items (`sourceId` links back); refresh keeps `id` and `transactions`.
 - No inline styles or `innerHTML` (community plugin guidelines); use CSS classes/variables in `styles.css`.

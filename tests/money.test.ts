@@ -5,7 +5,7 @@ import type { Budget, BudgetItem } from "../src/types";
 function item(amount: number, spends: number[], currency = "LKR"): BudgetItem {
 	return {
 		id: "i", name: "x", amount, currency, frequency: "", account: "", category: "", priority: "",
-		tags: [], description: "", manager: "",
+		tags: [], description: "", manager: "", created: "", modified: "",
 		transactions: spends.map((a, i) => ({ id: `t${i}`, date: "2026-11-01", amount: a, note: "" })),
 	};
 }

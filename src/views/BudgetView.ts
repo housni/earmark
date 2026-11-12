@@ -5,10 +5,10 @@ import { CreditModal } from "../modals/CreditModal";
 import { ItemModal, emptyFields } from "../modals/ItemModal";
 import { TransactionModal } from "../modals/TransactionModal";
 import { Total, balanceOf, formatMoney, spentOf, summarize } from "../money";
-import { distinct, errorMessage, newId, normalizeBudget, num, rebaseRates } from "../model";
+import { distinct, errorMessage, newId, normalizeBudget, now, num, rebaseRates } from "../model";
 import { renderError, updateBlock } from "../store";
 import { BUDGET_LANG, Budget, BudgetItem, Credit } from "../types";
-import { iconButton } from "./CatalogView";
+import { iconButton, stampCell } from "./ui";
 
 // Module state survives the re-render that follows every save.
 /** Item ids whose spending log is open. */
@@ -40,8 +40,13 @@ export function renderBudget(plugin: BudgetPlugin, source: string, el: HTMLEleme
 		updateBlock(plugin.app, file, BUDGET_LANG, lineStart(), normalize, mutate).catch(
 			(e: unknown) => new Notice(`Earmark: ${errorMessage(e)}`),
 		);
+	/** Changes one item and marks it modified. */
 	const saveItem = (id: string, fn: (target: BudgetItem, b: Budget) => void) =>
-		save((b) => fn(b.items[byId(b.items, id, "item")], b));
+		save((b) => {
+			const target = b.items[byId(b.items, id, "item")];
+			fn(target, b);
+			target.modified = now();
+		});
 	const saveCredit = (id: string, fn: (b: Budget, index: number) => void) =>
 		save((b) => fn(b, byId(b.credits, id, "credit")));
 
@@ -87,7 +92,14 @@ export function renderBudget(plugin: BudgetPlugin, source: string, el: HTMLEleme
 			{ ...emptyFields(settings), currency: base },
 			(fields) =>
 				void save((b) =>
-					b.items.push({ ...fields, id: newId(), currency: fields.currency || b.baseCurrency, transactions: [] }),
+					b.items.push({
+						...fields,
+						id: newId(),
+						currency: fields.currency || b.baseCurrency,
+						created: now(),
+						modified: now(),
+						transactions: [],
+					}),
 				),
 			"New item",
 		).open(),
@@ -117,7 +129,8 @@ export function renderBudget(plugin: BudgetPlugin, source: string, el: HTMLEleme
 		const head = table.createEl("thead").createEl("tr");
 		for (const [label, isNum] of [
 			["", false], ["Name", false], ["Category", false], ["Account", false], ["Manager", false],
-			["Allocated", true], ["Spent", true], ["Balance", true], ["", false], ["", false],
+			["Allocated", true], ["Spent", true], ["Balance", true], ["Created", false], ["Modified", false],
+			["", false], ["", false],
 		] as [string, boolean][]) {
 			head.createEl("th", { text: label, cls: isNum ? "budget-num" : "" });
 		}
@@ -166,6 +179,8 @@ export function renderBudget(plugin: BudgetPlugin, source: string, el: HTMLEleme
 
 		tr.createEl("td", { cls: "budget-num", text: money(spent, item.currency) });
 		tr.createEl("td", { cls: "budget-num budget-balance", text: money(balance, item.currency) });
+		stampCell(tr, item.created);
+		stampCell(tr, item.modified);
 
 		const progress = tr.createEl("td", { cls: "budget-progress-cell" });
 		const ratio = item.amount > 0 ? spent / item.amount : spent > 0 ? 1 : 0;
@@ -201,7 +216,7 @@ export function renderBudget(plugin: BudgetPlugin, source: string, el: HTMLEleme
 		});
 
 		if (!isOpen) return;
-		const sub = body.createEl("tr", { cls: "budget-subrow" }).createEl("td", { attr: { colspan: "10" } });
+		const sub = body.createEl("tr", { cls: "budget-subrow" }).createEl("td", { attr: { colspan: "12" } });
 		if (!item.transactions.length) {
 			sub.createDiv({ cls: "budget-empty", text: "No spending recorded yet." });
 			return;

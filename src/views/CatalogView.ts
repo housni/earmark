@@ -1,16 +1,15 @@
-import { MarkdownPostProcessorContext, Notice, TFile, parseYaml, setIcon } from "obsidian";
+import { MarkdownPostProcessorContext, Notice, TFile, parseYaml } from "obsidian";
 import type BudgetPlugin from "../main";
 import { ConfirmModal } from "../modals/common";
 import { ItemModal } from "../modals/ItemModal";
 import { formatMoney } from "../money";
-import { distinct, errorMessage, matchesFilter, newId, normalizeCatalog } from "../model";
+import { SortKey, distinct, errorMessage, matchesFilter, newId, normalizeCatalog, now, sortItems } from "../model";
 import { renderError, updateBlock } from "../store";
-import { CATALOG_LANG, Catalog, CatalogItem, ItemFilter } from "../types";
-
-type SortKey = "name" | "amount" | "currency" | "frequency" | "account" | "category" | "priority" | "tags" | "manager";
+import { CATALOG_LANG, Catalog, ItemFilter } from "../types";
+import { iconButton, sortHeader, stampCell } from "./ui";
 
 interface ViewState extends ItemFilter {
-	sortKey: SortKey;
+	sortKey: SortKey | "";
 	sortDir: 1 | -1;
 }
 
@@ -26,6 +25,8 @@ const COLUMNS: { key: SortKey; label: string; num?: boolean }[] = [
 	{ key: "priority", label: "Priority" },
 	{ key: "tags", label: "Tags" },
 	{ key: "manager", label: "Manager" },
+	{ key: "created", label: "Created" },
+	{ key: "modified", label: "Modified" },
 ];
 
 export function renderCatalog(plugin: BudgetPlugin, source: string, el: HTMLElement, ctx: MarkdownPostProcessorContext): void {
@@ -78,28 +79,23 @@ export function renderCatalog(plugin: BudgetPlugin, source: string, el: HTMLElem
 
 	const add = bar.createEl("button", { cls: "mod-cta", text: "Add item" });
 	add.addEventListener("click", () =>
-		new ItemModal(plugin.app, settings, null, (fields) => save((c) => c.items.push({ id: newId(), ...fields }))).open(),
+		new ItemModal(plugin.app, settings, null, (fields) => save((c) => {
+			const at = now();
+			c.items.push({ id: newId(), ...fields, created: at, modified: at });
+		})).open(),
 	);
 
 	const tableWrap = root.createDiv({ cls: "budget-table-wrap" });
 	const footer = root.createDiv({ cls: "budget-muted budget-footer" });
 
-	const priorityRank = (p: string) => {
-		const i = settings.priorities.indexOf(p);
-		return i < 0 ? settings.priorities.length : i;
-	};
-	const compare = (a: CatalogItem, b: CatalogItem): number => {
-		const k = state.sortKey;
-		if (k === "amount") return a.amount - b.amount;
-		if (k === "priority") return priorityRank(a.priority) - priorityRank(b.priority);
-		const av = k === "tags" ? a.tags.join(",") : a[k];
-		const bv = k === "tags" ? b.tags.join(",") : b[k];
-		return av.localeCompare(bv);
-	};
-
 	function renderTable(): void {
 		tableWrap.empty();
-		const rows = catalog.items.filter((item) => matchesFilter(item, state)).sort((a, b) => compare(a, b) * state.sortDir);
+		const rows = sortItems(
+			catalog.items.filter((item) => matchesFilter(item, state)),
+			state.sortKey,
+			state.sortDir,
+			settings.priorities,
+		);
 
 		footer.setText(`${rows.length} of ${catalog.items.length} items`);
 		if (!catalog.items.length) {
@@ -109,15 +105,7 @@ export function renderCatalog(plugin: BudgetPlugin, source: string, el: HTMLElem
 
 		const table = tableWrap.createEl("table", { cls: "budget-table" });
 		const head = table.createEl("thead").createEl("tr");
-		for (const col of COLUMNS) {
-			const th = head.createEl("th", { cls: col.num ? "budget-num budget-sortable" : "budget-sortable" });
-			th.setText(col.label + (state.sortKey === col.key ? (state.sortDir === 1 ? " ▲" : " ▼") : ""));
-			th.addEventListener("click", () => {
-				state.sortDir = state.sortKey === col.key ? (state.sortDir === 1 ? -1 : 1) : 1;
-				state.sortKey = col.key;
-				renderTable();
-			});
-		}
+		for (const col of COLUMNS) sortHeader(head, col.label, col.key, state, renderTable, col.num);
 		head.createEl("th");
 
 		const body = table.createEl("tbody");
@@ -139,13 +127,15 @@ export function renderCatalog(plugin: BudgetPlugin, source: string, el: HTMLElem
 			const tagCell = tr.createEl("td");
 			for (const t of item.tags) tagCell.createSpan({ cls: "budget-tag", text: t });
 			tr.createEl("td", { text: item.manager });
+			stampCell(tr, item.created);
+			stampCell(tr, item.modified);
 
 			const actions = tr.createEl("td", { cls: "budget-actions" });
 			iconButton(actions, "pencil", "Edit", () =>
 				new ItemModal(plugin.app, settings, item, (fields) =>
 					save((c) => {
 						const i = find(c, item.id);
-						c.items[i] = { ...c.items[i], ...fields };
+						c.items[i] = { ...c.items[i], ...fields, modified: now() };
 					}),
 				).open(),
 			);
@@ -160,14 +150,4 @@ export function renderCatalog(plugin: BudgetPlugin, source: string, el: HTMLElem
 	}
 
 	renderTable();
-}
-
-export function iconButton(parent: HTMLElement, icon: string, label: string, onClick: () => void): HTMLElement {
-	const btn = parent.createEl("button", { cls: "clickable-icon budget-icon-btn", attr: { "aria-label": label } });
-	setIcon(btn, icon);
-	btn.addEventListener("click", (e) => {
-		e.stopPropagation();
-		onClick();
-	});
-	return btn;
 }

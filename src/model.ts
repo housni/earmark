@@ -7,6 +7,7 @@ import type {
 	Credit,
 	ItemFields,
 	ItemFilter,
+	Stamps,
 	Transaction,
 } from "./types";
 
@@ -47,6 +48,20 @@ export function num(v: unknown): number {
 	if (typeof v === "number") return Number.isFinite(v) ? v : 0;
 	const n = parseFloat(str(v).replace(/,/g, ""));
 	return Number.isFinite(n) ? n : 0;
+}
+
+/** Keeps the full ISO timestamp, including when YAML parsed it into a Date. */
+function timestamp(v: unknown): string {
+	if (v instanceof Date) return Number.isNaN(v.getTime()) ? "" : v.toISOString();
+	return str(v);
+}
+
+function stamps(o: Obj): Stamps {
+	return { created: timestamp(o.created), modified: timestamp(o.modified) };
+}
+
+export function now(): string {
+	return new Date().toISOString();
 }
 
 function tags(v: unknown): string[] {
@@ -90,7 +105,7 @@ export function normalizeCatalog(raw: unknown): Catalog {
 		...o,
 		items: list(o.items, "items").map((v, i) => {
 			const item = obj(v);
-			return { ...normalizeFields(item), id: id(item, "c", i) };
+			return { ...normalizeFields(item), ...stamps(item), id: id(item, "c", i) };
 		}),
 	};
 }
@@ -114,6 +129,7 @@ export function normalizeBudget(raw: unknown, defaultCurrency: string): Budget {
 		const fields = normalizeFields(item);
 		const out: BudgetItem = {
 			...fields,
+			...stamps(item),
 			id: id(item, "i", i),
 			currency: fields.currency || baseCurrency,
 			transactions: list(item.transactions, "transactions").map((tv, ti): Transaction => {
@@ -140,10 +156,14 @@ export function normalizeBudget(raw: unknown, defaultCurrency: string): Budget {
 	return { ...o, title: str(o.title), baseCurrency, rates, items, credits };
 }
 
+/** Copies a catalog item into a budget. The copy gets its own id and dates. */
 export function snapshotItem(item: CatalogItem, baseCurrency: string): BudgetItem {
+	const at = now();
 	return {
 		...item,
 		id: newId(),
+		created: at,
+		modified: at,
 		tags: [...item.tags],
 		currency: item.currency || baseCurrency,
 		sourceId: item.id,
@@ -151,9 +171,15 @@ export function snapshotItem(item: CatalogItem, baseCurrency: string): BudgetIte
 	};
 }
 
-/** Re-copies catalog values onto a budget item, keeping its id and spending. */
+/** Re-copies catalog values onto a budget item, keeping its id, created date and spending. */
 export function refreshItem(item: BudgetItem, source: CatalogItem, baseCurrency: string): BudgetItem {
-	return { ...item, ...snapshotItem(source, baseCurrency), id: item.id, transactions: item.transactions };
+	return {
+		...item,
+		...snapshotItem(source, baseCurrency),
+		id: item.id,
+		created: item.created,
+		transactions: item.transactions,
+	};
 }
 
 /**
@@ -186,6 +212,53 @@ export function matchesFilter(item: ItemFields, f: ItemFilter): boolean {
 		if (!hay.includes(q)) return false;
 	}
 	return true;
+}
+
+export type SortKey =
+	| "name" | "amount" | "currency" | "frequency" | "account" | "category" | "priority" | "tags" | "manager"
+	| "created" | "modified" | "spent" | "balance";
+
+type Sortable = ItemFields & Stamps & { transactions?: Transaction[] };
+
+function spentSum(item: Sortable): number {
+	return (item.transactions ?? []).reduce((sum, t) => sum + t.amount, 0);
+}
+
+/** Sort value, or null for a blank (blanks always sort last). */
+function sortValue(item: Sortable, key: SortKey, priorities: string[]): string | number | null {
+	switch (key) {
+		case "amount":
+			return item.amount;
+		case "spent":
+			return spentSum(item);
+		case "balance":
+			return item.amount - spentSum(item);
+		case "priority": {
+			const i = priorities.indexOf(item.priority);
+			return i < 0 ? null : i;
+		}
+		case "tags":
+			return item.tags.join(", ") || null;
+		default:
+			return item[key] || null;
+	}
+}
+
+/**
+ * Sorted copy. Priority follows the order in settings (highest first);
+ * blanks sort last in both directions; an empty key keeps the original order.
+ */
+export function sortItems<T extends Sortable>(items: T[], key: SortKey | "", dir: 1 | -1, priorities: string[]): T[] {
+	if (!key) return [...items];
+	return [...items].sort((a, b) => {
+		const av = sortValue(a, key, priorities);
+		const bv = sortValue(b, key, priorities);
+		if (av === null || bv === null) return av === bv ? 0 : av === null ? 1 : -1;
+		const c = typeof av === "number" && typeof bv === "number"
+			? av - bv
+			: String(av).localeCompare(String(bv), undefined, { numeric: true });
+		return c * dir;
+	});
 }
 
 export function distinct(values: string[]): string[] {
@@ -262,6 +335,12 @@ export function replaceBlockBody(text: string, block: Block, body: string): stri
 export function isoDate(d = new Date()): string {
 	const pad = (n: number) => String(n).padStart(2, "0");
 	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** Local date (YYYY-MM-DD) of an ISO timestamp, or "" if it's blank or invalid. */
+export function stampDate(stamp: string): string {
+	const d = new Date(stamp);
+	return stamp && !Number.isNaN(d.getTime()) ? isoDate(d) : "";
 }
 
 export function errorMessage(e: unknown): string {

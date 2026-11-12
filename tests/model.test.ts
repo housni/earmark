@@ -12,6 +12,8 @@ import {
 	refreshItem,
 	replaceBlockBody,
 	snapshotItem,
+	sortItems,
+	stampDate,
 	toPlain,
 } from "../src/model";
 
@@ -191,5 +193,77 @@ describe("settings migration", () => {
 		const { settings, changed } = migrateSettings({ settingsVersion: 1, currencies: ["USD"] });
 		expect(settings.currencies).toEqual(["USD"]);
 		expect(changed).toBe(false);
+	});
+});
+
+describe("created and modified dates", () => {
+	it("keeps full timestamps, including ones YAML parsed into Dates", () => {
+		const stamp = "2026-11-12T13:40:00.000Z";
+		const fromString = normalizeCatalog(parse(`items:\n  - { id: a, name: A, created: "${stamp}" }`));
+		const fromDate = normalizeCatalog(parse(`items:\n  - { id: a, name: A, created: ${stamp} }`));
+		expect(fromString.items[0].created).toBe(stamp);
+		expect(fromDate.items[0].created).toBe(stamp);
+		expect(fromDate.items[0].modified).toBe("");
+		// Survives a write and re-read.
+		const again = normalizeCatalog(parse(stringify(toPlain(fromDate))));
+		expect(again.items[0].created).toBe(stamp);
+	});
+
+	it("gives snapshots their own dates and keeps created on refresh", () => {
+		const [item] = normalizeCatalog(
+			parse("items:\n  - { id: k1, name: Rent, amount: 1, created: 2020-01-01T00:00:00.000Z }"),
+		).items;
+		const snap = snapshotItem(item, "LKR");
+		expect(snap.created).not.toBe(item.created);
+		expect(snap.created).toBe(snap.modified);
+		const old = { ...snap, created: "2025-01-01T00:00:00.000Z", modified: "2025-01-01T00:00:00.000Z" };
+		const refreshed = refreshItem(old, item, "LKR");
+		expect(refreshed.created).toBe("2025-01-01T00:00:00.000Z");
+		expect(refreshed.modified > old.modified).toBe(true);
+	});
+
+	it("shows a local date, or blank for missing or invalid stamps", () => {
+		expect(stampDate(new Date(2026, 10, 12, 23, 59).toISOString())).toBe("2026-11-12");
+		expect(stampDate("")).toBe("");
+		expect(stampDate("nonsense")).toBe("");
+	});
+});
+
+describe("sortItems", () => {
+	const items = normalizeBudget(
+		parse(`
+items:
+  - { id: a, name: Rent, amount: 100, priority: Low, created: 2026-03-01T00:00:00.000Z, transactions: [{ amount: 120 }] }
+  - { id: b, name: vet, amount: 20, priority: High }
+  - { id: c, name: Visa 10, amount: 50, priority: Medium, created: 2026-01-01T00:00:00.000Z, transactions: [{ amount: 5 }] }
+  - { id: d, name: Visa 9, amount: 50, priority: Unlisted, created: 2026-02-01T00:00:00.000Z }
+`),
+		"LKR",
+	).items;
+	const priorities = ["High", "Medium", "Low"];
+	const ids = (key: Parameters<typeof sortItems>[1], dir: 1 | -1 = 1) => sortItems(items, key, dir, priorities).map((i) => i.id);
+
+	it("keeps the original order without a key", () => {
+		expect(ids("")).toEqual(["a", "b", "c", "d"]);
+	});
+
+	it("sorts text case-insensitively and numbers naturally", () => {
+		expect(ids("name")).toEqual(["a", "b", "d", "c"]);
+	});
+
+	it("sorts numbers, spending and balance", () => {
+		expect(ids("amount")).toEqual(["b", "c", "d", "a"]);
+		expect(ids("spent", -1)).toEqual(["a", "c", "b", "d"]);
+		expect(ids("balance")).toEqual(["a", "b", "c", "d"]);
+	});
+
+	it("sorts priority by settings order with unlisted last", () => {
+		expect(ids("priority")).toEqual(["b", "c", "a", "d"]);
+		expect(ids("priority", -1)).toEqual(["a", "c", "b", "d"]);
+	});
+
+	it("puts blank dates last in both directions", () => {
+		expect(ids("created")).toEqual(["c", "d", "a", "b"]);
+		expect(ids("created", -1)).toEqual(["a", "d", "c", "b"]);
 	});
 });

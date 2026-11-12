@@ -162,7 +162,22 @@ You should see:
    - Nothing is overwritten. Fix the YAML and the UI comes back.
 3. Add an item by hand with no `id` and click its edit button. The save works, and an `id` is written to the item.
 
-### 4.9 Edge cases
+### 4.9 Created and modified dates
+Both tables have **Created** and **Modified** columns. They show the local date; hover over one to see the full date and time.
+1. In the catalog, the items you added in 4.1 show today's date in both columns. Edit one item: only its **Modified** date changes, though you'll only see a difference on a later day. Hover to compare the times.
+2. In the budget, the dates belong to the budget's own copy of each item, not to the catalog item. The copies were created when you added them to the budget.
+3. Anything that changes a budget item updates its **Modified** time:
+   - logging, editing or deleting spending
+   - changing **Allocated**
+   - editing the item
+   - **Refresh from catalog**, which keeps the item's **Created** date
+
+   Hover over **Modified** before and after each change to see the time move.
+4. Items written before this version have no dates and show **—**. To try it, add an item by hand in Source mode without `created`/`modified`.
+5. Click the **Created** or **Modified** header to sort. Items without dates stay at the bottom whether you sort ascending (▲) or descending (▼).
+6. In Source mode, each item has `created:` and `modified:` lines with ISO timestamps, e.g. `2026-11-12T13:40:00.000Z`.
+
+### 4.10 Edge cases
 - **Reading view and Live Preview**: repeat a couple of actions in each. Both views should behave the same.
 - **Callouts and lists**: put a ```` ```budget ```` block inside a `> [!note]` callout, or indent it under a list item. Saves keep the `> ` or indent prefix on every line.
 - **Two budgets in one note**: their buttons each edit their own block. The command **Earmark: Add items from catalog to current budget** says the note has several budgets and asks you to use the button instead.
