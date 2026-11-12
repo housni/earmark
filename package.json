@@ -13,10 +13,10 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^22.10.0",
-    "esbuild": "^0.25.0",
+    "esbuild": "^0.28.2",
     "obsidian": "^1.13.0",
-    "typescript": "^5.7.0",
-    "vitest": "^3.0.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.0",
     "yaml": "^2.7.0"
   }
 }
