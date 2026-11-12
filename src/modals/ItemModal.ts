@@ -70,7 +70,7 @@ export class ItemModal extends Modal {
 		choice("Account", settings.accounts, "account");
 		choice("Category", settings.categories, "category");
 		choice("Priority", settings.priorities, "priority");
-		choice("Managed by", settings.managers, "manager");
+		choice("Executor", settings.managers, "manager");
 
 		new Setting(contentEl)
 			.setName("Tags")

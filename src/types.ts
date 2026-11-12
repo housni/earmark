@@ -65,7 +65,7 @@ export type ItemStatus = "not-started" | "in-progress" | "spent" | "over";
 
 /** Every field is "" when unused. Amounts are input text; dates are YYYY-MM-DD. */
 export interface ItemFilter {
-	/** Matches name, description, tags, manager, category and account. */
+	/** Matches name, description, tags, executor (`manager`), category and account. */
 	search: string;
 	category: string;
 	account: string;

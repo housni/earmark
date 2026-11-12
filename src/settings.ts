@@ -19,10 +19,10 @@ const LISTS: Record<ListKey, { name: string; desc: string }> = {
 			"by account to see how much each one is paying for. Kept in A–Z order.",
 	},
 	managers: {
-		name: "Managers",
+		name: "Executors",
 		desc:
-			"The people who do the actual buying. Filter a budget by manager to see how much to send to each person " +
-			"for the items they look after. Kept in A–Z order.",
+			"The people who carry out the spending, such as paying the bill or doing the shopping. Filter a budget " +
+			"by executor to see how much to send to each person for the items they handle. Kept in A–Z order.",
 	},
 	frequencies: {
 		name: "Frequencies",
