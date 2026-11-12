@@ -65,11 +65,71 @@ See [TESTING.md](TESTING.md) for build options (including Docker), installing in
 
 ## Release
 
-CI runs the tests and the build on every push to `main` and on every pull request. To publish a release:
+CI runs the tests and the build on every push to `main` and on every pull request. A release is published when you push a version tag.
+
+### 1. Pick the version
+
+Start from a clean working tree on an up-to-date `main` (`git status`, `git pull`). Then choose the kind of bump:
+
+| Bump | When | Example |
+|---|---|---|
+| `patch` | bug fixes only | 0.1.1 → 0.1.2 |
+| `minor` | new features, existing notes still work | 0.1.1 → 0.2.0 |
+| `major` | breaking changes, e.g. to the YAML format | 0.1.1 → 1.0.0 |
+
+### 2. Bump the version
+
+`npm version` runs `version-bump.mjs`, which bumps `package.json`, `manifest.json` and `versions.json`. It then commits and tags the new version. Tags have no `v` prefix (`0.1.2`), because Obsidian requires the tag to equal the manifest version. Never edit these versions by hand.
+
+**With Node installed:**
 
 ```sh
 npm version patch   # or minor / major
+```
+
+**With Docker** (no local Node needed):
+
+```sh
+docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp \
+  -v "$HOME/.config/git/config":/tmp/.config/git/config:ro \
+  -v "$PWD":/app -w /app \
+  node:22 npm version patch   # or minor / major
+```
+
+- Use `node:22`, not `node:22-slim`. `npm version` needs git, and only the full image includes it.
+- Your git config is mounted read-only so the commit carries your name and email. If yours lives at `~/.gitconfig`, mount `-v "$HOME/.gitconfig":/tmp/.gitconfig:ro` instead.
+- The container has no access to your GPG or SSH signing keys. If you sign commits or tags, use the native command instead.
+
+Either way, check the result before pushing:
+
+```sh
+git log --oneline -1      # a commit named after the new version, e.g. "0.1.2"
+git tag --points-at HEAD  # the same version
+```
+
+### 3. Push
+
+Pushing happens on the host in both cases, so your normal SSH keys and credentials are used:
+
+```sh
 git push --follow-tags
 ```
 
-`npm version` bumps `package.json`, `manifest.json` and `versions.json`, then commits and tags the new version (`0.1.1`, with no `v`). Pushing the tag runs the release workflow. It tests, builds, checks that the tag matches the manifest, and publishes a GitHub Release with `main.js`, `manifest.json`, `styles.css` and a zip of all three.
+The tag starts the release workflow (`.github/workflows/release.yml`), which:
+1. installs, tests and builds the plugin
+2. fails if the tag doesn't match the `manifest.json` or `package.json` version
+3. publishes a GitHub Release with `main.js`, `manifest.json`, `styles.css` and `earmark-<version>.zip`
+
+BRAT users get the update automatically.
+
+To follow the run and check the release (with the [GitHub CLI](https://cli.github.com/)):
+
+```sh
+gh run watch                    # pick the Release run
+gh release view 0.1.2           # should list 4 assets
+```
+
+### If something goes wrong
+
+- **Bumped but not pushed yet:** undo the bump with `git tag -d 0.1.2 && git reset --hard HEAD~1`.
+- **The workflow failed after pushing:** fix the problem, then release the next version, for example `0.1.3`. Don't move or reuse a tag that has already been pushed, because BRAT and other users may have seen it.
