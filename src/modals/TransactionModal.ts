@@ -1,5 +1,5 @@
-import { App, Modal, Notice, Setting, moment } from "obsidian";
-import { newId, num } from "../model";
+import { App, Modal, Notice, Setting } from "obsidian";
+import { isoDate, newId, num } from "../model";
 import type { Transaction } from "../types";
 import { addButtons } from "./common";
 
@@ -14,7 +14,7 @@ export class TransactionModal extends Modal {
 	) {
 		super(app);
 		this.titleEl.setText(heading);
-		this.value = initial ? { ...initial } : { id: newId(), date: moment().format("YYYY-MM-DD"), amount: 0, note: "" };
+		this.value = initial ? { ...initial } : { id: newId(), date: isoDate(), amount: 0, note: "" };
 	}
 
 	onOpen(): void {

@@ -3,7 +3,9 @@ import { parse, stringify } from "yaml";
 import {
 	catalogNeedsIds,
 	findBlocks,
+	isoDate,
 	matchesFilter,
+	monthTitle,
 	normalizeBudget,
 	normalizeCatalog,
 	rebaseRates,
@@ -160,5 +162,13 @@ describe("snapshots", () => {
 		expect(matchesFilter(rent, { search: "", category: "Housing", account: "", tag: "fixed" })).toBe(true);
 		expect(matchesFilter(rent, { search: "ren", category: "", account: "", tag: "" })).toBe(true);
 		expect(matchesFilter(rent, { search: "", category: "Pet", account: "", tag: "" })).toBe(false);
+	});
+});
+
+describe("dates", () => {
+	it("formats local dates without moment", () => {
+		const d = new Date(2026, 0, 5, 23, 30); // local time, late in the day
+		expect(isoDate(d)).toBe("2026-01-05");
+		expect(monthTitle(d, "en-US")).toBe("2026-01 January");
 	});
 });

@@ -258,6 +258,17 @@ export function replaceBlockBody(text: string, block: Block, body: string): stri
 	return [...lines.slice(0, block.start + 1), ...bodyLines, ...lines.slice(block.end)].join(eol);
 }
 
+/** Local calendar date as YYYY-MM-DD. */
+export function isoDate(d = new Date()): string {
+	const pad = (n: number) => String(n).padStart(2, "0");
+	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** Default budget title, e.g. "2026-11 November". */
+export function monthTitle(d = new Date(), locale?: string): string {
+	return `${isoDate(d).slice(0, 7)} ${d.toLocaleString(locale || undefined, { month: "long" })}`;
+}
+
 export function errorMessage(e: unknown): string {
 	return e instanceof Error ? e.message : String(e);
 }
