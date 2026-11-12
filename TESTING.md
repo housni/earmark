@@ -55,6 +55,17 @@ To remove it, turn the plugin off, delete `.obsidian/plugins/earmark`, and delet
   - run **Reload app without saving** from the command palette
   - install the community plugin **Hot-Reload**, which reloads a symlinked plugin automatically
 
+### Fresh install or upgrade: `data.json`
+Earmark saves its settings in `data.json` inside its plugin folder, `<vault>/.obsidian/plugins/earmark/data.json`. If you installed with a symlink, that's the repo folder; git ignores the file. Once the file exists, Earmark loads your saved settings instead of the defaults. That changes what you're testing:
+
+- **Testing as a new user**, to check the default lists, currencies and other settings: you must delete `data.json` first.
+  1. Turn Earmark off in **Settings → Community plugins**, or quit Obsidian. Otherwise Obsidian may write the file again from memory.
+  2. Delete the file: `rm /path/to/vault/.obsidian/plugins/earmark/data.json`
+  3. Turn Earmark back on. You'll see exactly what a new install sees.
+
+  This resets every Earmark setting, including your base currency and colour vision mode. Your notes, catalog and budgets aren't affected, because they live in your notes, not in `data.json`. To keep a copy, back up the file instead of deleting it: `mv data.json data.json.bak`.
+- **Testing an upgrade**, to check that your settings survive a new version: keep `data.json`. One-time migrations run on first load. For example, saved lists that still match an older version's defaults are swapped for the new defaults, and customised lists are only sorted (see section 3). To repeat a migration, set `"settingsVersion"` in the file to an older number while Earmark is off, then turn it back on.
+
 ## 3. Set up for the walkthrough
 
 The walkthrough uses Sri Lankan rupees (LKR) as the base currency and US dollars (USD) as a second currency. Open **Settings → Earmark**. It's grouped under four headings: **Notes**, **Money**, **Lists** and **Display**. Set:
