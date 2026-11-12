@@ -50,3 +50,5 @@ npm run build   # type-check + production build
 ```
 
 Symlink this folder into `<vault>/.obsidian/plugins/earmark/` and enable the plugin.
+
+See [TESTING.md](TESTING.md) for build options (including Docker), installing into a vault, and a step-by-step walkthrough of every feature with expected results.
