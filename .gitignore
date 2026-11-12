@@ -6,6 +6,9 @@ main.js
 # Obsidian plugin settings (created when installed in a vault)
 data.json
 
+# Vault config, created if this folder is opened as a vault
+.obsidian/
+
 # Claude Code: commit CLAUDE.md, .claude/settings.json and .claude/plans/;
 # keep personal and machine-specific files out.
 .claude/settings.local.json
