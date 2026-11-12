@@ -1,5 +1,6 @@
 import { setIcon } from "obsidian";
-import { stampDate } from "../model";
+import type { ColorVision } from "../config";
+import { priorityTier, stampDate } from "../model";
 
 export function iconButton(parent: HTMLElement, icon: string, label: string, onClick: () => void): HTMLElement {
 	const btn = parent.createEl("button", { cls: "clickable-icon budget-icon-btn", attr: { "aria-label": label } });
@@ -45,5 +46,26 @@ export function sortHeader<K extends string>(
 			state.sortDir = 1;
 		}
 		onSort();
+	});
+}
+
+const CVD_CLASSES = ["budget-cvd", "budget-cvd-redgreen", "budget-cvd-blueyellow", "budget-cvd-mono"];
+
+/**
+ * Sets an Earmark root element's colour vision classes. Any mode but
+ * "standard" swaps the palette (styles.css) and turns on shapes and labels.
+ */
+export function applyColorVision(el: HTMLElement, mode: ColorVision): void {
+	el.removeClass(...CVD_CLASSES);
+	if (mode !== "standard") el.addClass("budget-cvd", `budget-cvd-${mode}`);
+}
+
+/** Priority label, coloured by its tier (top, middle or bottom third of the priorities list). */
+export function priorityBadge(parent: HTMLElement, priority: string, priorities: string[]): HTMLElement {
+	const tier = priorityTier(priority, priorities);
+	return parent.createSpan({
+		cls: ["budget-badge", "budget-priority", ...(tier ? [`is-${tier}`] : [])],
+		text: priority,
+		attr: tier ? { "aria-label": `${priority} (${tier} priority)` } : {},
 	});
 }

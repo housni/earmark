@@ -2,6 +2,15 @@
 
 export const DEFAULT_TITLE_FORMAT = "YYYY-MM MMMM";
 
+export type ColorVision = "standard" | "redgreen" | "blueyellow" | "mono";
+
+export const COLOR_VISIONS: { value: ColorVision; label: string }[] = [
+	{ value: "standard", label: "Standard" },
+	{ value: "redgreen", label: "Red-green (protanopia, deuteranopia)" },
+	{ value: "blueyellow", label: "Blue-yellow (tritanopia)" },
+	{ value: "mono", label: "Monochrome (achromatopsia)" },
+];
+
 export interface BudgetSettings {
 	/** Bumped when a migration in migrateSettings() must run once. */
 	settingsVersion: number;
@@ -18,6 +27,8 @@ export interface BudgetSettings {
 	accounts: string[];
 	priorities: string[];
 	managers: string[];
+	/** Palette for coloured states; any mode but "standard" also adds shapes and labels. */
+	colorVision: ColorVision;
 }
 
 export const SETTINGS_VERSION = 1;
@@ -35,6 +46,7 @@ export const DEFAULT_SETTINGS: BudgetSettings = {
 	accounts: ["Housni", "Common"],
 	priorities: ["High", "Medium", "Low"],
 	managers: ["Housni"],
+	colorVision: "standard",
 };
 
 /**

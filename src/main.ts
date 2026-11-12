@@ -3,12 +3,13 @@ import { ConfirmModal, TextPromptModal } from "./modals/common";
 import { PickItemsModal } from "./modals/PickItemsModal";
 import { formatDate } from "./dates";
 import { catalogNeedsIds, errorMessage, findBlocks, normalizeBudget, normalizeCatalog, refreshItem, snapshotItem } from "./model";
-import { BudgetSettings, migrateSettings } from "./config";
+import { BudgetSettings, ColorVision, migrateSettings } from "./config";
 import { BudgetSettingTab } from "./settings";
 import { toYaml, updateBlock } from "./store";
 import { BUDGET_LANG, Budget, CATALOG_LANG, CatalogItem } from "./types";
 import { renderBudget } from "./views/BudgetView";
 import { renderCatalog } from "./views/CatalogView";
+import { applyColorVision } from "./views/ui";
 
 export default class BudgetPlugin extends Plugin {
 	settings!: BudgetSettings;
@@ -49,6 +50,13 @@ export default class BudgetPlugin extends Plugin {
 
 	async saveSettings(): Promise<void> {
 		await this.saveData(this.settings);
+	}
+
+	/** Saves the colour vision mode and applies it to every Earmark view already on screen. */
+	async setColorVision(mode: ColorVision): Promise<void> {
+		this.settings.colorVision = mode;
+		await this.saveSettings();
+		activeDocument.querySelectorAll<HTMLElement>(".budget-plugin:not(.budget-cvd-sample)").forEach((el) => applyColorVision(el, mode));
 	}
 
 	private catalogFile(): TFile | null {

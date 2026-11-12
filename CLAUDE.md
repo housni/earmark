@@ -25,4 +25,5 @@ Obsidian plugin for budget planning and tracking. Data lives in notes as YAML in
 - Normalizers spread the raw object first so hand-added YAML keys survive saves; `toPlain` drops empty fields below top level.
 - Budget items are snapshots of catalog items (`sourceId` links back); refresh keeps `id` and `transactions`.
 - No inline styles or `innerHTML` (community plugin guidelines); use CSS classes/variables in `styles.css`.
+- Colours come from CSS variables (`--budget-pos`, `--budget-neg`, `--budget-p-high|medium|low`), which each colour vision mode (`budget-cvd-*`, set by `applyColorVision`) redefines. Any new coloured state needs a non-colour cue under `.budget-cvd` too.
 - Tabs for indentation, double quotes.

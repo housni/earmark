@@ -21,7 +21,7 @@ import {
 import { renderError, updateBlock } from "../store";
 import { BUDGET_LANG, Budget, BudgetItem, Credit } from "../types";
 import { FilterState, newFilterState, renderFilterBar } from "./FilterBar";
-import { iconButton, sortHeader, stampCell } from "./ui";
+import { applyColorVision, iconButton, priorityBadge, sortHeader, stampCell } from "./ui";
 
 // Module state survives the re-render that follows every save.
 /** Item ids whose spending log is open. */
@@ -89,6 +89,7 @@ export function renderBudget(plugin: BudgetPlugin, source: string, el: HTMLEleme
 	const base = budget.baseCurrency;
 	const money = (amount: number, currency = base) => formatMoney(amount, currency, settings.locale);
 	const root = el.createDiv({ cls: "budget-plugin budget-view" });
+	applyColorVision(root, settings.colorVision);
 	root.addEventListener("focusin", (e) => {
 		const key = (e.target as HTMLElement).dataset?.budgetFocus;
 		if (key) lastFocus = { key, at: Date.now() };
@@ -238,7 +239,7 @@ export function renderBudget(plugin: BudgetPlugin, source: string, el: HTMLEleme
 			name.addClass("budget-has-desc");
 		}
 		const prio = tr.createEl("td");
-		if (item.priority) prio.createSpan({ cls: "budget-badge", text: item.priority });
+		if (item.priority) priorityBadge(prio, item.priority, settings.priorities);
 		tr.createEl("td", { text: item.category });
 		tr.createEl("td", { text: item.account });
 		tr.createEl("td", { text: item.manager });

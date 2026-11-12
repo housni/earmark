@@ -7,7 +7,7 @@ import { SortKey, errorMessage, isFiltered, matchesFilter, newId, normalizeCatal
 import { renderError, updateBlock } from "../store";
 import { CATALOG_LANG, Catalog } from "../types";
 import { FilterState, newFilterState, renderFilterBar } from "./FilterBar";
-import { iconButton, sortHeader, stampCell } from "./ui";
+import { applyColorVision, iconButton, priorityBadge, sortHeader, stampCell } from "./ui";
 
 interface ViewState extends FilterState {
 	sortKey: SortKey | "";
@@ -56,6 +56,7 @@ export function renderCatalog(plugin: BudgetPlugin, source: string, el: HTMLElem
 	states.set(file.path, state);
 
 	const root = el.createDiv({ cls: "budget-plugin budget-catalog" });
+	applyColorVision(root, settings.colorVision);
 	const filterBar = renderFilterBar(root, { items: catalog.items, state, onChange: () => renderTable() });
 
 	const add = filterBar.toolbar.createEl("button", { cls: "mod-cta", text: "Add item" });
@@ -111,7 +112,7 @@ export function renderCatalog(plugin: BudgetPlugin, source: string, el: HTMLElem
 			tr.createEl("td", { text: item.frequency });
 			tr.createEl("td", { text: item.account });
 			tr.createEl("td", { text: item.category });
-			tr.createEl("td", { text: item.priority });
+			priorityBadge(tr.createEl("td"), item.priority, settings.priorities);
 			const tagCell = tr.createEl("td");
 			for (const t of item.tags) tagCell.createSpan({ cls: "budget-tag", text: t });
 			tr.createEl("td", { text: item.manager });

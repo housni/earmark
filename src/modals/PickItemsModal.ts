@@ -4,6 +4,7 @@ import { matchesFilter } from "../model";
 import type { BudgetSettings } from "../config";
 import type { CatalogItem } from "../types";
 import { newFilterState, renderFilterBar } from "../views/FilterBar";
+import { applyColorVision, priorityBadge } from "../views/ui";
 import { addButtons } from "./common";
 
 export class PickItemsModal extends Modal {
@@ -33,6 +34,7 @@ export class PickItemsModal extends Modal {
 	onOpen(): void {
 		const { contentEl } = this;
 		contentEl.addClass("budget-plugin", "budget-picker");
+		applyColorVision(contentEl, this.settings.colorVision);
 
 		const bar = renderFilterBar(contentEl, {
 			items: this.catalog,
@@ -85,6 +87,7 @@ export class PickItemsModal extends Modal {
 			});
 			const text = row.createDiv({ cls: "budget-pick-text" });
 			const title = text.createDiv({ cls: "budget-pick-name", text: item.name });
+			if (item.priority) priorityBadge(title, item.priority, this.settings.priorities);
 			if (this.existing.has(item.id)) title.createSpan({ cls: "budget-badge", text: "in budget" });
 			text.createDiv({
 				cls: "budget-muted",

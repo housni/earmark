@@ -12,6 +12,7 @@ import {
 	matchesFilter,
 	normalizeBudget,
 	normalizeCatalog,
+	priorityTier,
 	rebaseRates,
 	refreshItem,
 	replaceBlockBody,
@@ -348,5 +349,23 @@ items:
 	it("counts active filters without the search text", () => {
 		expect(activeFilterCount({ ...emptyFilter(), search: "x", category: "Pet", amountMin: "1" })).toBe(2);
 		expect(isFiltered({ ...emptyFilter(), search: "x" })).toBe(true);
+	});
+});
+
+describe("priorityTier", () => {
+	it("maps the default three levels directly", () => {
+		expect(["High", "Medium", "Low"].map((p) => priorityTier(p, ["High", "Medium", "Low"]))).toEqual(["high", "medium", "low"]);
+	});
+
+	it("splits longer and shorter lists into thirds", () => {
+		const five = ["P1", "P2", "P3", "P4", "P5"];
+		expect(five.map((p) => priorityTier(p, five))).toEqual(["high", "high", "medium", "low", "low"]);
+		expect(["A", "B"].map((p) => priorityTier(p, ["A", "B"]))).toEqual(["high", "low"]);
+		expect(priorityTier("Only", ["Only"])).toBe("high");
+	});
+
+	it("has no tier for unlisted or blank priorities", () => {
+		expect(priorityTier("Urgent", ["High", "Low"])).toBeNull();
+		expect(priorityTier("", ["High", "Low"])).toBeNull();
 	});
 });

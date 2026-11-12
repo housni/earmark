@@ -194,7 +194,21 @@ Both tables have **Created** and **Modified** columns. They show the local date;
    - **Clear filters** in the note resets everything.
 4. Filters and sorting stay in place after you log spending or edit an item, while the note is open.
 
-### 4.11 Edge cases
+### 4.11 Priority colours and colour vision
+1. With **Settings → Earmark → Colour vision** on *Standard*:
+   - Priority badges in the catalog, budget and picker are coloured by level: *High* red, *Medium* orange, *Low* blue, using your theme's shades.
+   - Priorities are split into thirds of the settings list, so the colours still work if you add more levels. A priority not in the list gets a plain, uncoloured badge.
+2. Click **Help me choose**. A window shows four rows, one per mode. Each has three priority badges, an overspent and an on-track balance, *Surplus*/*Shortfall* chips and two progress bars, one normal and one overspent.
+   - The current mode is outlined and marked "(current)".
+   - Click **Use this** on another row. The window closes, the dropdown changes, and any open catalog or budget switches at once, with no reload needed.
+3. In any mode other than *Standard*, check the cues that don't rely on colour:
+   - Priorities show **▲▲** (high), **▲** (medium) and **▽** (low).
+   - Vet's balance reads **"−2,000 ⚠ over"**, and its progress bar is striped and slightly taller.
+   - The *Surplus* card reads **▲ Surplus**, and *Shortfall* and *Overspent* show **▼**.
+4. Try each palette in light and dark themes (**Settings → Appearance**). Text and badges should stay readable in both. *Monochrome* uses only greys, with a filled badge for high priority and a dashed one for low.
+5. Switch back to *Standard*. The shapes and labels disappear and the theme colours return.
+
+### 4.12 Edge cases
 - **Reading view and Live Preview**: repeat a couple of actions in each. Both views should behave the same.
 - **Callouts and lists**: put a ```` ```budget ```` block inside a `> [!note]` callout, or indent it under a list item. Saves keep the `> ` or indent prefix on every line.
 - **Two budgets in one note**: their buttons each edit their own block. The command **Earmark: Add items from catalog to current budget** says the note has several budgets and asks you to use the button instead.

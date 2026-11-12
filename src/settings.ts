@@ -1,5 +1,6 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
-import { DEFAULT_TITLE_FORMAT } from "./config";
+import { COLOR_VISIONS, ColorVision, DEFAULT_TITLE_FORMAT } from "./config";
+import { ColorVisionModal } from "./modals/ColorVisionModal";
 import type BudgetPlugin from "./main";
 
 type ListKey = "currencies" | "frequencies" | "categories" | "accounts" | "priorities" | "managers";
@@ -78,6 +79,27 @@ export class BudgetSettingTab extends PluginSettingTab {
 					s.locale = v.trim();
 					await this.plugin.saveSettings();
 				}),
+			);
+
+		new Setting(containerEl)
+			.setName("Colour vision")
+			.setDesc(
+				"Colours for priorities, overspending and surplus. Any option other than Standard also adds shapes " +
+					"and labels (▲▲ ▲ ▽, ⚠ over, striped bars) so colour is never the only cue.",
+			)
+			.addDropdown((d) => {
+				for (const { value, label } of COLOR_VISIONS) d.addOption(value, label);
+				d.setValue(s.colorVision).onChange(async (v) => {
+					await this.plugin.setColorVision(v as ColorVision);
+				});
+			})
+			.addButton((b) =>
+				b.setButtonText("Help me choose").onClick(() =>
+					new ColorVisionModal(this.app, s.colorVision, s.priorities, async (mode) => {
+						await this.plugin.setColorVision(mode);
+						this.display();
+					}).open(),
+				),
 			);
 
 		for (const { key, name, desc } of LISTS) {

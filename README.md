@@ -15,17 +15,33 @@ To install by hand instead, download `earmark-<version>.zip` from the [latest re
 ## Use
 
 1. **Open or create budget catalog** (command palette) creates `Budgets/_Catalog.md`. Click **Add item** to add rent, vet bills, visa fees and so on.
-2. **New budget** asks for a title, lets you pick items from the catalog, and creates a budget note.
+2. **New budget** suggests a title using your *Budget title format* (moment tokens, default `YYYY-MM MMMM`). It then lets you pick items from the catalog and creates a budget note.
 3. In the budget note:
    - **⊕** logs spending against an item. The chevron shows its log.
    - Edit **Allocated** inline.
    - **Add credit** records money coming in (bank account, tax rebate…).
    - Enter **exchange rates** for any currency other than the base currency.
    - The cards at the top show total cost, spent, still to be spent, credits, and the resulting surplus or shortfall.
+   - If a rate is missing, the warning names the currency as a link that jumps to its exchange-rate box. **Open catalog** takes you to the catalog.
 
 Budget items are *copies* of catalog items, so editing the catalog never changes a past budget. **Refresh from catalog** pulls the current values while keeping your spending.
 
-Frequencies, categories, accounts, priorities, managers and currencies are all configured in the plugin settings.
+Both the catalog and budgets:
+- **Search and filter** by every field: category, account, tag, frequency, priority, manager, currency, amount range, and created/modified dates. Budgets can also filter by spending status (not started, in progress, fully spent, overspent). While a budget is filtered, its cost and spending cards cover only the visible items.
+- **Sort** by clicking any column header.
+- Track **created** and **modified** dates for every item.
+
+Frequencies, categories, accounts, priorities, managers, currencies and the title format are all configured in the plugin settings.
+
+### Colour vision
+
+Priorities are coloured by level, and overspending and surplus have their own colours. Under **Settings → Colour vision** you can pick a palette for red-green colour blindness (protanopia, deuteranopia), blue-yellow (tritanopia) or monochrome (achromatopsia). Choosing any of them also adds shapes and labels, so colour is never the only cue:
+- priorities show ▲▲, ▲ or ▽
+- overspent balances say "⚠ over"
+- overspent bars are striped
+- surplus and shortfall show ▲ and ▼
+
+**Help me choose** shows the same sample in every palette, so you can pick the one you read most easily.
 
 ## Data format
 

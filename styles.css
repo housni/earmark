@@ -1,7 +1,56 @@
+/*
+ * Palette. "Standard" uses the theme's colours; the colour vision modes use
+ * colourblind-safe sets (Okabe-Ito, Paul Tol) that also differ in lightness.
+ */
 .budget-plugin {
 	--budget-pos: var(--color-green);
 	--budget-neg: var(--color-red);
+	--budget-p-high: var(--color-red);
+	--budget-p-medium: var(--color-orange);
+	--budget-p-low: var(--color-blue);
+	--budget-over-fill: var(--budget-neg);
 	font-size: var(--font-ui-small);
+}
+
+.budget-plugin.budget-cvd-redgreen {
+	--budget-pos: #0072b2;
+	--budget-neg: #d55e00;
+	--budget-p-high: #d55e00;
+	--budget-p-medium: #b07800;
+	--budget-p-low: #0072b2;
+}
+
+.theme-dark .budget-plugin.budget-cvd-redgreen {
+	--budget-pos: #56b4e9;
+	--budget-neg: #e69f00;
+	--budget-p-high: #e69f00;
+	--budget-p-medium: #f0e442;
+	--budget-p-low: #56b4e9;
+}
+
+.budget-plugin.budget-cvd-blueyellow {
+	--budget-pos: #009988;
+	--budget-neg: #cc3311;
+	--budget-p-high: #cc3311;
+	--budget-p-medium: #aa3377;
+	--budget-p-low: #009988;
+}
+
+.theme-dark .budget-plugin.budget-cvd-blueyellow {
+	--budget-pos: #44bb99;
+	--budget-neg: #ee6677;
+	--budget-p-high: #ee6677;
+	--budget-p-medium: #ee99bb;
+	--budget-p-low: #44bb99;
+}
+
+.budget-plugin.budget-cvd-mono {
+	--budget-pos: var(--text-normal);
+	--budget-neg: var(--text-normal);
+	--budget-p-high: var(--text-normal);
+	--budget-p-medium: var(--text-muted);
+	--budget-p-low: var(--text-faint);
+	--budget-over-fill: var(--text-normal);
 }
 
 .budget-plugin .budget-toolbar {
@@ -235,7 +284,7 @@
 }
 
 .budget-progress-fill.is-over {
-	background: var(--budget-neg);
+	background: var(--budget-over-fill);
 }
 
 .budget-subrow > td {
@@ -359,4 +408,117 @@
 
 .budget-wide-input {
 	width: 100%;
+}
+
+/* Priority badges */
+.budget-plugin .budget-priority {
+	border: 1px solid currentColor;
+	background: transparent;
+	font-weight: var(--font-semibold);
+	white-space: nowrap;
+}
+
+.budget-priority.is-high { color: var(--budget-p-high); }
+.budget-priority.is-medium { color: var(--budget-p-medium); }
+.budget-priority.is-low { color: var(--budget-p-low); }
+
+.budget-cvd-mono .budget-priority.is-high {
+	background: var(--text-normal);
+	color: var(--background-primary);
+	border-color: var(--text-normal);
+}
+
+.budget-cvd-mono .budget-priority.is-low {
+	border-style: dashed;
+}
+
+/*
+ * Non-colour cues, on in every colour vision mode: shapes on priorities,
+ * labels on overspending, arrows on surplus/shortfall and striped bars.
+ */
+.budget-cvd .budget-priority.is-high::before { content: "▲▲ "; }
+.budget-cvd .budget-priority.is-medium::before { content: "▲ "; }
+.budget-cvd .budget-priority.is-low::before { content: "▽ "; }
+
+.budget-cvd .budget-over .budget-balance::after {
+	content: " ⚠ over";
+	font-size: var(--font-ui-smaller);
+}
+
+.budget-cvd .budget-card.budget-pos .budget-card-label::before { content: "▲ "; }
+.budget-cvd .budget-card.budget-neg .budget-card-label::before { content: "▼ "; }
+
+.budget-cvd .budget-progress {
+	height: 8px;
+}
+
+.budget-cvd .budget-progress-fill.is-over {
+	background-color: var(--budget-over-fill);
+	background-image: repeating-linear-gradient(
+		-45deg,
+		transparent 0,
+		transparent 3px,
+		var(--background-primary) 3px,
+		var(--background-primary) 5px
+	);
+}
+
+.budget-cvd-mono .budget-progress-fill {
+	background: var(--text-muted);
+}
+
+/* Colour vision chooser */
+.budget-cvd-row {
+	display: flex;
+	align-items: center;
+	gap: var(--size-4-3);
+	padding: var(--size-4-3);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: var(--radius-m);
+	margin-bottom: var(--size-4-2);
+}
+
+.budget-cvd-row.is-current {
+	border-color: var(--interactive-accent);
+}
+
+.budget-cvd-sample {
+	flex: 1;
+	min-width: 0;
+}
+
+.budget-cvd-row-title {
+	font-weight: var(--font-semibold);
+	margin-bottom: var(--size-2-2);
+}
+
+.budget-cvd-sample-line {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--size-4-2);
+}
+
+.budget-cvd-sample .budget-badge {
+	margin-left: 0;
+}
+
+.budget-cvd-sample .budget-over .budget-balance {
+	color: var(--budget-neg);
+	font-weight: var(--font-semibold);
+}
+
+.budget-cvd-chip.budget-card {
+	padding: var(--size-2-1) var(--size-4-2);
+}
+
+.budget-cvd-chip .budget-card-value {
+	font-size: var(--font-ui-small);
+	margin: 0;
+	text-transform: none;
+	letter-spacing: normal;
+}
+
+.budget-cvd-bar {
+	width: 4rem;
 }

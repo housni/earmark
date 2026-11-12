@@ -297,6 +297,20 @@ export function matchesFilter(item: ListItem, f: ItemFilter): boolean {
 	return true;
 }
 
+export type PriorityTier = "high" | "medium" | "low";
+
+/**
+ * Splits the priorities list (highest first) into thirds, so any number of
+ * levels maps onto high/medium/low. Unlisted priorities have no tier.
+ */
+export function priorityTier(priority: string, priorities: string[]): PriorityTier | null {
+	const i = priorities.indexOf(priority);
+	if (i < 0) return null;
+	if (priorities.length === 1) return "high";
+	const pos = i / (priorities.length - 1);
+	return pos < 1 / 3 ? "high" : pos <= 2 / 3 ? "medium" : "low";
+}
+
 export function distinct(values: string[]): string[] {
 	return [...new Set(values.filter(Boolean))].sort((a, b) => a.localeCompare(b));
 }
