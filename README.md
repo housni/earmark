@@ -149,3 +149,7 @@ gh release view 0.1.2           # should list 4 assets
 
 - **Bumped but not pushed yet:** undo the bump with `git tag -d 0.1.2 && git reset --hard HEAD~1`.
 - **The workflow failed after pushing:** fix the problem, then release the next version, for example `0.1.3`. Don't move or reuse a tag that has already been pushed, because BRAT and other users may have seen it.
+
+## License
+
+[MIT](LICENSE)
