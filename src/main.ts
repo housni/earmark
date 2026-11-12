@@ -43,7 +43,7 @@ export default class BudgetPlugin extends Plugin {
 	}
 
 	async loadSettings(): Promise<void> {
-		const { settings, changed } = migrateSettings(await this.loadData());
+		const { settings, changed } = migrateSettings((await this.loadData()) as Partial<BudgetSettings> | null);
 		this.settings = settings;
 		if (changed) await this.saveSettings();
 	}
@@ -72,7 +72,7 @@ export default class BudgetPlugin extends Plugin {
 		}
 		const block = findBlocks(await this.app.vault.read(file), CATALOG_LANG)[0];
 		if (!block) throw new Error(`“${file.path}” has no ${CATALOG_LANG} block.`);
-		const raw = parseYaml(block.body);
+		const raw: unknown = parseYaml(block.body);
 		if (catalogNeedsIds(raw)) {
 			return (await updateBlock(this.app, file, CATALOG_LANG, block.start, normalizeCatalog, () => {})).items;
 		}

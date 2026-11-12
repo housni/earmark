@@ -233,11 +233,9 @@ export function renderBudget(plugin: BudgetPlugin, source: string, el: HTMLEleme
 			renderBudget(plugin, source, el, ctx);
 		});
 
-		const name = tr.createEl("td", { text: item.name });
-		if (item.description) {
-			name.title = item.description;
-			name.addClass("budget-has-desc");
-		}
+		const name = tr.createEl("td");
+		if (item.description) name.createSpan({ cls: "budget-has-desc", text: item.name, attr: { title: item.description } });
+		else name.setText(item.name);
 		const prio = tr.createEl("td");
 		if (item.priority) priorityBadge(prio, item.priority, settings.priorities);
 		tr.createEl("td", { text: item.category });

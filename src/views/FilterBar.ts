@@ -146,8 +146,8 @@ export function renderFilterBar(parent: HTMLElement, o: FilterBarOptions): Filte
 		toggle.setText(n ? `Filters (${n})` : "Filters");
 		toggle.setAttr("aria-expanded", String(state.open));
 		toggle.toggleClass("is-active", n > 0);
-		panel.toggleClass("budget-hidden", !state.open);
-		clearBtn.toggleClass("budget-hidden", !isFiltered(f));
+		panel.toggle(state.open);
+		clearBtn.toggle(isFiltered(f));
 	}
 
 	function changed(): void {

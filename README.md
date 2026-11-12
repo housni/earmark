@@ -10,7 +10,9 @@ Until Earmark is in the community plugin store, install it with [BRAT](https://g
 2. Run **BRAT: Add a beta plugin for testing** and enter `housni/earmark`.
 3. Enable **Earmark** under Community plugins. BRAT keeps it updated as new releases come out.
 
-To install by hand instead, download `earmark-<version>.zip` from the [latest release](https://github.com/housni/earmark/releases/latest) and unzip it into `<vault>/.obsidian/plugins/`.
+To install by hand instead, download `main.js`, `manifest.json` and `styles.css` from the [latest release](https://github.com/housni/earmark/releases/latest) into `<vault>/.obsidian/plugins/earmark/`.
+
+Earmark needs Obsidian 1.13.0 or later.
 
 ## Use
 
@@ -134,7 +136,8 @@ git push --follow-tags
 The tag starts the release workflow (`.github/workflows/release.yml`), which:
 1. installs, tests and builds the plugin
 2. fails if the tag doesn't match the `manifest.json` or `package.json` version
-3. publishes a GitHub Release with `main.js`, `manifest.json`, `styles.css` and `earmark-<version>.zip`
+3. attests the build provenance of `main.js`, `manifest.json` and `styles.css`, so anyone can check them with `gh attestation verify <file> --repo housni/earmark`
+4. publishes a GitHub Release with those three files
 
 BRAT users get the update automatically.
 
@@ -142,7 +145,7 @@ To follow the run and check the release (with the [GitHub CLI](https://cli.githu
 
 ```sh
 gh run watch                    # pick the Release run
-gh release view 0.1.2           # should list 4 assets
+gh release view 0.1.2           # should list 3 assets
 ```
 
 ### If something goes wrong
