@@ -11,6 +11,8 @@ Obsidian plugin for budget planning and tracking. Data lives in notes as YAML in
 
 ## Layout
 - `src/model.ts`, `src/money.ts`: pure logic (normalize, ids, block find/replace, totals). No `obsidian` imports, so they stay testable.
+- `src/config.ts`: settings shape, defaults and `migrateSettings` (pure, tested). Bump `SETTINGS_VERSION` and add a step there when saved settings need a one-time change. `src/settings.ts` is only the settings tab.
+- `src/dates.ts`: `formatDate` wraps Obsidian's `moment` (cast, because TS 7 rejects its declared type).
 - `src/store.ts`: `updateBlock` rewrites one block via `vault.process`, located by `getSectionInfo().lineStart`.
 - `src/views/`: `CatalogView`, `BudgetView` (rendered per code block).
 - `src/modals/`: forms and pickers.

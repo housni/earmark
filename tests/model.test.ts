@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { parse, stringify } from "yaml";
+import { migrateSettings } from "../src/config";
 import {
 	catalogNeedsIds,
 	findBlocks,
 	isoDate,
 	matchesFilter,
-	monthTitle,
 	normalizeBudget,
 	normalizeCatalog,
 	rebaseRates,
@@ -166,9 +166,30 @@ describe("snapshots", () => {
 });
 
 describe("dates", () => {
-	it("formats local dates without moment", () => {
+	it("formats local calendar dates", () => {
 		const d = new Date(2026, 0, 5, 23, 30); // local time, late in the day
 		expect(isoDate(d)).toBe("2026-01-05");
-		expect(monthTitle(d, "en-US")).toBe("2026-01 January");
+	});
+});
+
+describe("settings migration", () => {
+	it("uses defaults for a fresh install without saving", () => {
+		const { settings, changed } = migrateSettings(null);
+		expect(settings.currencies).toEqual(["USD", "EUR", "GBP", "KES", "LKR"]);
+		expect(changed).toBe(false);
+	});
+
+	it("adds KES and LKR once to saved lists from before v1", () => {
+		const { settings, changed } = migrateSettings({ currencies: ["USD", "LKR"], baseCurrency: "LKR" });
+		expect(settings.currencies).toEqual(["USD", "LKR", "KES"]);
+		expect(settings.baseCurrency).toBe("LKR");
+		expect(settings.settingsVersion).toBe(1);
+		expect(changed).toBe(true);
+	});
+
+	it("respects removals made after migrating", () => {
+		const { settings, changed } = migrateSettings({ settingsVersion: 1, currencies: ["USD"] });
+		expect(settings.currencies).toEqual(["USD"]);
+		expect(changed).toBe(false);
 	});
 });

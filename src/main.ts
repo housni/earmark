@@ -1,8 +1,10 @@
 import { Notice, Plugin, TFile, TFolder, normalizePath, parseYaml } from "obsidian";
 import { ConfirmModal, TextPromptModal } from "./modals/common";
 import { PickItemsModal } from "./modals/PickItemsModal";
-import { catalogNeedsIds, errorMessage, findBlocks, monthTitle, normalizeBudget, normalizeCatalog, refreshItem, snapshotItem } from "./model";
-import { BudgetSettingTab, BudgetSettings, DEFAULT_SETTINGS } from "./settings";
+import { formatDate } from "./dates";
+import { catalogNeedsIds, errorMessage, findBlocks, normalizeBudget, normalizeCatalog, refreshItem, snapshotItem } from "./model";
+import { BudgetSettings, migrateSettings } from "./config";
+import { BudgetSettingTab } from "./settings";
 import { toYaml, updateBlock } from "./store";
 import { BUDGET_LANG, Budget, CATALOG_LANG, CatalogItem } from "./types";
 import { renderBudget } from "./views/BudgetView";
@@ -40,7 +42,9 @@ export default class BudgetPlugin extends Plugin {
 	}
 
 	async loadSettings(): Promise<void> {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		const { settings, changed } = migrateSettings(await this.loadData());
+		this.settings = settings;
+		if (changed) await this.saveSettings();
 	}
 
 	async saveSettings(): Promise<void> {
@@ -88,7 +92,7 @@ export default class BudgetPlugin extends Plugin {
 	}
 
 	newBudget(): void {
-		new TextPromptModal(this.app, "New budget", monthTitle(new Date(), this.settings.locale), (title) => void this.createBudget(title)).open();
+		new TextPromptModal(this.app, "New budget", formatDate(new Date(), this.settings.titleFormat), (title) => void this.createBudget(title)).open();
 	}
 
 	private async createBudget(title: string): Promise<void> {

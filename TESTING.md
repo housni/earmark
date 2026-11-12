@@ -62,7 +62,7 @@ The walkthrough uses Sri Lankan rupees (LKR) as the base currency and US dollars
 | Setting | Value |
 |---|---|
 | Default base currency | `LKR` |
-| Currencies | add `LKR` on its own line, keeping `USD` |
+| Currencies | should list `USD, EUR, GBP, KES, LKR`. On an existing install, `KES` and `LKR` are added once, automatically, the first time this version loads. |
 | Budgets folder / Catalog note | leave as `Budgets` and `Budgets/_Catalog.md`, or point them at a scratch folder |
 
 The other lists in settings (frequencies, categories, accounts, priorities, managers) fill the dropdowns in the item form. You can change any of them.
@@ -95,11 +95,12 @@ How numbers are displayed (symbols, separators) depends on your system locale, o
 6. Switch to Source mode. The block is YAML, and each item has an `id`.
 
 ### 4.2 Create a budget
-1. Run **Earmark: New budget** and accept the suggested title (the current month), or type your own.
-2. In the picker, check that you can filter and use **Select visible**. The submit button counts selected items ("Add 3 items"). Select all three and confirm.
+1. In **Settings → Earmark → Budget title format**, try `YYYYMMDD`. The "Today:" sample under the setting updates as you type, for example `20261112`. Clear the box: the sample shows the default format, `2026-11 November`. Leave it empty or set it back to `YYYY-MM MMMM`.
+2. Run **Earmark: New budget**. The suggested title follows the format, for example `2026-11 November`. Accept it, or type your own.
+3. In the picker, check that you can filter and use **Select visible**. The submit button counts selected items ("Add 3 items"). Select all three and confirm.
    - You should see `Budgets/<title>.md` created and opened.
    - It has a header with the title, a base-currency dropdown, and the buttons **Add from catalog**, **Add custom item** and **Refresh from catalog**.
-3. With no exchange rate yet, the *Total cost* card shows **—**. Below it are per-currency subtotals (115,000 LKR + 200 USD) and **"Needs a rate for USD"**.
+4. With no exchange rate yet, the *Total cost* card shows **—**. Below it are per-currency subtotals (115,000 LKR + 200 USD) and **"Needs a rate for USD"**.
 
 ### 4.3 Exchange rates
 1. Under **Exchange rates**, enter `300` in the "1 USD = … LKR" box and press Tab or Enter.

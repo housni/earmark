@@ -1,32 +1,6 @@
 import { App, PluginSettingTab, Setting } from "obsidian";
+import { DEFAULT_TITLE_FORMAT } from "./config";
 import type BudgetPlugin from "./main";
-
-export interface BudgetSettings {
-	catalogPath: string;
-	budgetsFolder: string;
-	baseCurrency: string;
-	/** BCP 47 locale for number formatting; empty uses the system default. */
-	locale: string;
-	currencies: string[];
-	frequencies: string[];
-	categories: string[];
-	accounts: string[];
-	priorities: string[];
-	managers: string[];
-}
-
-export const DEFAULT_SETTINGS: BudgetSettings = {
-	catalogPath: "Budgets/_Catalog.md",
-	budgetsFolder: "Budgets",
-	baseCurrency: "USD",
-	locale: "",
-	currencies: ["USD", "EUR", "GBP"],
-	frequencies: ["One-time", "Weekly", "Monthly", "Quarterly", "Yearly"],
-	categories: ["Housing", "Food", "Transport", "Utilities", "Pet", "Immigration", "Health", "Other"],
-	accounts: ["Housni", "Common"],
-	priorities: ["High", "Medium", "Low"],
-	managers: ["Housni"],
-};
 
 type ListKey = "currencies" | "frequencies" | "categories" | "accounts" | "priorities" | "managers";
 
@@ -68,6 +42,23 @@ export class BudgetSettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}),
 			);
+
+		const title = new Setting(containerEl)
+			.setName("Budget title format")
+			.setDesc("Suggested title for new budgets, using moment tokens as in Daily Notes. For example YYYY-MM MMMM or YYYYMMDD. ");
+		const sample = title.descEl.createEl("div");
+		sample.appendText("Today: ");
+		const sampleEl = sample.createEl("b", { cls: "u-pop" });
+		title.addMomentFormat((m) =>
+			m
+				.setDefaultFormat(DEFAULT_TITLE_FORMAT)
+				.setValue(s.titleFormat)
+				.setSampleEl(sampleEl)
+				.onChange(async (v) => {
+					s.titleFormat = v.trim();
+					await this.plugin.saveSettings();
+				}),
+		);
 
 		new Setting(containerEl)
 			.setName("Default base currency")

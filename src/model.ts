@@ -264,11 +264,6 @@ export function isoDate(d = new Date()): string {
 	return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-/** Default budget title, e.g. "2026-11 November". */
-export function monthTitle(d = new Date(), locale?: string): string {
-	return `${isoDate(d).slice(0, 7)} ${d.toLocaleString(locale || undefined, { month: "long" })}`;
-}
-
 export function errorMessage(e: unknown): string {
 	return e instanceof Error ? e.message : String(e);
 }

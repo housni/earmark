@@ -1,7 +1,7 @@
 import { App, Modal } from "obsidian";
 import { formatMoney } from "../money";
 import { distinct, matchesFilter } from "../model";
-import type { BudgetSettings } from "../settings";
+import type { BudgetSettings } from "../config";
 import type { CatalogItem, ItemFilter } from "../types";
 import { addButtons } from "./common";
 

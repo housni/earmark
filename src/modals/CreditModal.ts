@@ -1,6 +1,6 @@
 import { App, Modal, Notice, Setting } from "obsidian";
 import { newId, num } from "../model";
-import type { BudgetSettings } from "../settings";
+import type { BudgetSettings } from "../config";
 import type { Credit } from "../types";
 import { addButtons, fillDropdown } from "./common";
 
