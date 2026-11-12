@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { parse, stringify } from "yaml";
-import { migrateSettings } from "../src/config";
+import { DEFAULT_SETTINGS, migrateSettings, sortedList } from "../src/config";
 import {
 	activeFilterCount,
 	catalogNeedsIds,
@@ -180,6 +180,30 @@ describe("dates", () => {
 });
 
 describe("settings migration", () => {
+	it("sorts saved categories, accounts and managers once (v2), leaving ordered lists alone", () => {
+		const { settings, changed } = migrateSettings({
+			settingsVersion: 1,
+			categories: ["Housing", "Other", "food", "Pet"],
+			accounts: ["Zed", "Common"],
+			managers: ["bo", "Al"],
+			priorities: ["Low", "High"],
+			frequencies: ["Yearly", "Monthly"],
+		});
+		expect(settings.categories).toEqual(["food", "Housing", "Pet", "Other"]);
+		expect(settings.accounts).toEqual(["Common", "Zed"]);
+		expect(settings.managers).toEqual(["Al", "bo"]);
+		expect(settings.priorities).toEqual(["Low", "High"]);
+		expect(settings.frequencies).toEqual(["Yearly", "Monthly"]);
+		expect(changed).toBe(true);
+	});
+
+	it("ships default lists that are already in order", () => {
+		for (const key of ["categories", "accounts", "managers"] as const) {
+			expect(DEFAULT_SETTINGS[key]).toEqual(sortedList(DEFAULT_SETTINGS[key]));
+		}
+		expect(DEFAULT_SETTINGS.categories.at(-1)).toBe("Other");
+	});
+
 	it("uses defaults for a fresh install without saving", () => {
 		const { settings, changed } = migrateSettings(null);
 		expect(settings.currencies).toEqual(["USD", "EUR", "GBP", "KES", "LKR"]);
@@ -190,12 +214,12 @@ describe("settings migration", () => {
 		const { settings, changed } = migrateSettings({ currencies: ["USD", "LKR"], baseCurrency: "LKR" });
 		expect(settings.currencies).toEqual(["USD", "LKR", "KES"]);
 		expect(settings.baseCurrency).toBe("LKR");
-		expect(settings.settingsVersion).toBe(1);
+		expect(settings.settingsVersion).toBe(2);
 		expect(changed).toBe(true);
 	});
 
 	it("respects removals made after migrating", () => {
-		const { settings, changed } = migrateSettings({ settingsVersion: 1, currencies: ["USD"] });
+		const { settings, changed } = migrateSettings({ settingsVersion: 2, currencies: ["USD"] });
 		expect(settings.currencies).toEqual(["USD"]);
 		expect(changed).toBe(false);
 	});
@@ -285,7 +309,7 @@ items:
     account: Common
     category: Housing
     priority: High
-    manager: Housni
+    manager: Jane
     tags: [fixed]
     created: 2026-11-01T10:00:00.000Z
     modified: 2026-11-10T10:00:00.000Z
@@ -296,10 +320,10 @@ items:
     amount: 200
     currency: USD
     frequency: One-time
-    account: Housni
-    category: Immigration
+    account: John
+    category: Other
     priority: Low
-    manager: Housni
+    manager: Jane
     transactions: [{ amount: 50 }]
   - { id: c, name: Vet, amount: 15, currency: LKR, category: Pet, transactions: [{ amount: 20 }] }
   - { id: d, name: Food, amount: 40, currency: LKR, category: Food }
@@ -317,7 +341,7 @@ items:
 	it("filters by each choice field", () => {
 		expect(ids({ frequency: "Monthly" })).toEqual(["a"]);
 		expect(ids({ priority: "Low" })).toEqual(["b"]);
-		expect(ids({ manager: "Housni" })).toEqual(["a", "b"]);
+		expect(ids({ manager: "Jane" })).toEqual(["a", "b"]);
 		expect(ids({ currency: "USD" })).toEqual(["b"]);
 		expect(ids({ account: "Common", category: "Housing" })).toEqual(["a"]);
 		expect(ids({ tag: "fixed" })).toEqual(["a"]);
@@ -367,5 +391,17 @@ describe("priorityTier", () => {
 	it("has no tier for unlisted or blank priorities", () => {
 		expect(priorityTier("Urgent", ["High", "Low"])).toBeNull();
 		expect(priorityTier("", ["High", "Low"])).toBeNull();
+	});
+});
+
+describe("sortedList", () => {
+	it("sorts A–Z ignoring case, with Other last", () => {
+		expect(sortedList(["Pet", "other", "Charity/Donation", "food", "Debts"])).toEqual([
+			"Charity/Donation", "Debts", "food", "Pet", "other",
+		]);
+	});
+
+	it("trims, drops blanks and case-insensitive duplicates", () => {
+		expect(sortedList([" John ", "", "jane", "John", "JANE", "  "])).toEqual(["jane", "John"]);
 	});
 });

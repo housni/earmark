@@ -31,7 +31,7 @@ export interface BudgetSettings {
 	colorVision: ColorVision;
 }
 
-export const SETTINGS_VERSION = 1;
+export const SETTINGS_VERSION = 2;
 
 export const DEFAULT_SETTINGS: BudgetSettings = {
 	settingsVersion: SETTINGS_VERSION,
@@ -42,12 +42,39 @@ export const DEFAULT_SETTINGS: BudgetSettings = {
 	locale: "",
 	currencies: ["USD", "EUR", "GBP", "KES", "LKR"],
 	frequencies: ["One-time", "Weekly", "Monthly", "Quarterly", "Yearly"],
-	categories: ["Housing", "Food", "Transport", "Utilities", "Pet", "Immigration", "Health", "Other"],
-	accounts: ["Housni", "Common"],
+	categories: [
+		"Charity/Donation", "Debts", "Entertainment", "Family", "Food", "Health", "Holidays", "Housing",
+		"Pet", "Savings", "Subscriptions", "Transport", "Utilities", "Other",
+	],
+	accounts: ["Common", "Jane", "John"],
 	priorities: ["High", "Medium", "Low"],
-	managers: ["Housni"],
+	managers: ["Jane", "John"],
 	colorVision: "standard",
 };
+
+/**
+ * Lists kept in A–Z order (see sortedList). Frequencies, priorities and
+ * currencies keep the order typed, because their order means something.
+ */
+export const SORTED_LISTS = ["categories", "accounts", "managers"] as const;
+
+/**
+ * Trims, drops blanks and case-insensitive duplicates, and sorts A–Z
+ * ignoring case, with any "Other" entry kept last.
+ */
+export function sortedList(values: string[]): string[] {
+	const seen = new Set<string>();
+	const unique = values
+		.map((v) => v.trim())
+		.filter((v) => {
+			const key = v.toLowerCase();
+			if (!v || seen.has(key)) return false;
+			seen.add(key);
+			return true;
+		});
+	const isOther = (v: string) => v.toLowerCase() === "other";
+	return unique.sort((a, b) => Number(isOther(a)) - Number(isOther(b)) || a.localeCompare(b, undefined, { sensitivity: "base" }));
+}
 
 /**
  * Brings saved settings up to date. Each step runs once, guarded by
@@ -60,6 +87,10 @@ export function migrateSettings(saved: Partial<BudgetSettings> | null): { settin
 	if (from < 1) {
 		// v1: KES and LKR joined the default currencies.
 		for (const c of ["KES", "LKR"]) if (!settings.currencies.includes(c)) settings.currencies = [...settings.currencies, c];
+	}
+	if (from < 2) {
+		// v2: categories, accounts and managers are kept in A–Z order.
+		for (const key of SORTED_LISTS) settings[key] = sortedList(settings[key]);
 	}
 	settings.settingsVersion = SETTINGS_VERSION;
 	return { settings, changed: from < SETTINGS_VERSION };

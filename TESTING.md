@@ -57,7 +57,7 @@ To remove it, turn the plugin off, delete `.obsidian/plugins/earmark`, and delet
 
 ## 3. Set up for the walkthrough
 
-The walkthrough uses Sri Lankan rupees (LKR) as the base currency and US dollars (USD) as a second currency. Open **Settings → Earmark** and set:
+The walkthrough uses Sri Lankan rupees (LKR) as the base currency and US dollars (USD) as a second currency. Open **Settings → Earmark**. It's grouped under four headings: **Notes**, **Money**, **Lists** and **Display**. Set:
 
 | Setting | Value |
 |---|---|
@@ -65,7 +65,22 @@ The walkthrough uses Sri Lankan rupees (LKR) as the base currency and US dollars
 | Currencies | should list `USD, EUR, GBP, KES, LKR`. On an existing install, `KES` and `LKR` are added once, automatically, the first time this version loads. |
 | Budgets folder / Catalog note | leave as `Budgets` and `Budgets/_Catalog.md`, or point them at a scratch folder |
 
-The other lists in settings (frequencies, categories, accounts, priorities, managers) fill the dropdowns in the item form. You can change any of them.
+The lists under **Lists** fill the dropdowns in the item form. Each one has a description under its name. The defaults are:
+
+| List | Default | Order |
+|---|---|---|
+| Categories | Charity/Donation, Debts, Entertainment, Family, Food, Health, Holidays, Housing, Pet, Savings, Subscriptions, Transport, Utilities, Other | A–Z, Other last |
+| Accounts | Common, Jane, John | A–Z |
+| Managers | Jane, John | A–Z |
+| Frequencies | One-time, Weekly, Monthly, Quarterly, Yearly | as typed |
+| Priorities | High, Medium, Low | as typed, highest first |
+
+If you already had saved settings from an earlier version, your own lists are kept, but categories, accounts and managers are put into A–Z order once.
+
+Check how the lists behave:
+- **Sorting**: add `Books` to the end of *Categories*, then click outside the box. The text re-orders: *Books* moves between *Charity/Donation* and *Debts*, and *Other* stays last. *Accounts* and *Managers* behave the same way. *Priorities* and *Frequencies* keep the order you type.
+- **Duplicates and blank lines** are dropped, e.g. typing `food` when *Food* is already there.
+- **Notices**: changing *Currencies*, *Priorities*, *Default base currency* or *Number format locale* shows one notice per setting, each time you open the settings page. It says that budget and catalog notes that are already open show the change once you close and reopen them, and that no restart is needed. Other settings apply immediately and show no notice.
 
 How numbers are displayed (symbols, separators) depends on your system locale, or on the *Number format locale* setting. The amounts below are written as plain numbers.
 
@@ -79,9 +94,9 @@ How numbers are displayed (symbols, separators) depends on your system locale, o
 
    | Name | Amount | Currency | Frequency | Account | Category | Priority | Tags | Managed by |
    |---|---|---|---|---|---|---|---|---|
-   | Rent | 100000 | LKR | Monthly | Common | Housing | High | fixed | Housni |
-   | Vet | 15000 | LKR | One-time | Common | Pet | Medium | | Housni |
-   | Visa fee | 200 | USD | One-time | Housni | Immigration | High | visa, docs | Housni |
+   | Rent | 100000 | LKR | Monthly | Common | Housing | High | fixed | John |
+   | Vet | 15000 | LKR | One-time | Common | Pet | Medium | | Jane |
+   | Visa fee | 200 | USD | One-time | Jane | Other | High | visa, docs | Jane |
 
    Give **Rent** a description, for example "Apartment rent".
 

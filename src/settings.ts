@@ -1,32 +1,90 @@
-import { App, PluginSettingTab, Setting } from "obsidian";
-import { COLOR_VISIONS, ColorVision, DEFAULT_TITLE_FORMAT } from "./config";
+import { App, Notice, PluginSettingTab, Setting } from "obsidian";
+import { BudgetSettings, COLOR_VISIONS, ColorVision, DEFAULT_TITLE_FORMAT, SORTED_LISTS, sortedList } from "./config";
 import { ColorVisionModal } from "./modals/ColorVisionModal";
 import type BudgetPlugin from "./main";
 
 type ListKey = "currencies" | "frequencies" | "categories" | "accounts" | "priorities" | "managers";
 
-const LISTS: { key: ListKey; name: string; desc: string }[] = [
-	{ key: "currencies", name: "Currencies", desc: "ISO codes (USD, LKR, KES…), one per line." },
-	{ key: "frequencies", name: "Frequencies", desc: "One per line." },
-	{ key: "categories", name: "Categories", desc: "One per line." },
-	{ key: "accounts", name: "Accounts", desc: "Accounts money is taken from, one per line." },
-	{ key: "priorities", name: "Priorities", desc: "Highest first, one per line. Used for sorting." },
-	{ key: "managers", name: "Managers", desc: "People who manage items, one per line." },
-];
+const LISTS: Record<ListKey, { name: string; desc: string }> = {
+	categories: {
+		name: "Categories",
+		desc:
+			"What the money is for, such as housing, food or savings. Grouping items by category lets you filter " +
+			"a budget and see which parts of your life cost the most. Kept in A–Z order, with Other last.",
+	},
+	accounts: {
+		name: "Accounts",
+		desc:
+			"Where the money comes from, for example each partner's own account and a shared one. Filter a budget " +
+			"by account to see how much each one is paying for. Kept in A–Z order.",
+	},
+	managers: {
+		name: "Managers",
+		desc:
+			"The people who do the actual buying. Filter a budget by manager to see how much to send to each person " +
+			"for the items they look after. Kept in A–Z order.",
+	},
+	frequencies: {
+		name: "Frequencies",
+		desc: "How often an item recurs. For reference and filtering; amounts aren't converted.",
+	},
+	priorities: {
+		name: "Priorities",
+		desc: "Highest first. The order sets sorting and badge colours: top third high, middle medium, bottom third low.",
+	},
+	currencies: {
+		name: "Currencies",
+		desc: "ISO codes such as USD, KES or LKR. These fill the currency dropdowns.",
+	},
+};
+
+/**
+ * Settings that open budget and catalog notes read when they draw, so a change
+ * only shows in them after they redraw. Everything else applies immediately.
+ */
+const REDRAW: ReadonlySet<string> = new Set(["currencies", "priorities", "locale", "baseCurrency"]);
+
+function isSorted(key: ListKey): boolean {
+	return (SORTED_LISTS as readonly string[]).includes(key);
+}
+
+function cleanList(key: ListKey, text: string): string[] {
+	const values = text.split("\n").map((x) => x.trim()).filter(Boolean);
+	if (key === "currencies") return values.map((x) => x.toUpperCase());
+	return isSorted(key) ? sortedList(values) : values;
+}
 
 export class BudgetSettingTab extends PluginSettingTab {
+	/** Settings already announced this visit, so typing doesn't repeat the notice. */
+	private announced = new Set<string>();
+
 	constructor(app: App, private plugin: BudgetPlugin) {
 		super(app, plugin);
+	}
+
+	/** Saves, and tells the user once if open notes need to redraw to show this change. */
+	private async save(key: string, label: string): Promise<void> {
+		await this.plugin.saveSettings();
+		if (!REDRAW.has(key) || this.announced.has(key)) return;
+		this.announced.add(key);
+		new Notice(
+			`Earmark: budget and catalog notes that are already open will show the new ${label.toLowerCase()} ` +
+				"once you close and reopen them. No restart needed.",
+			10000,
+		);
 	}
 
 	display(): void {
 		const { containerEl } = this;
 		const s = this.plugin.settings;
 		containerEl.empty();
+		this.announced.clear();
+
+		this.heading("Notes");
 
 		new Setting(containerEl)
 			.setName("Catalog note")
-			.setDesc("Path of the note holding the budget-catalog block.")
+			.setDesc("Path of the note that holds your budget catalog.")
 			.addText((t) =>
 				t.setValue(s.catalogPath).onChange(async (v) => {
 					s.catalogPath = v.trim();
@@ -61,25 +119,34 @@ export class BudgetSettingTab extends PluginSettingTab {
 				}),
 		);
 
+		this.heading("Money");
+
 		new Setting(containerEl)
 			.setName("Default base currency")
-			.setDesc("Totals are converted to this currency. Each budget can override it.")
+			.setDesc("New budgets convert their totals to this currency. Each budget can change it.")
 			.addText((t) =>
 				t.setValue(s.baseCurrency).onChange(async (v) => {
 					s.baseCurrency = v.trim().toUpperCase();
-					await this.plugin.saveSettings();
+					await this.save("baseCurrency", "Default base currency");
 				}),
 			);
 
+		this.list("currencies");
+
 		new Setting(containerEl)
 			.setName("Number format locale")
-			.setDesc("For example en-US or en-LK. Leave empty to use the system locale.")
+			.setDesc("How amounts are written, for example en-US or en-KE. Leave empty to use your system's format.")
 			.addText((t) =>
 				t.setValue(s.locale).onChange(async (v) => {
 					s.locale = v.trim();
-					await this.plugin.saveSettings();
+					await this.save("locale", "Number format locale");
 				}),
 			);
+
+		this.heading("Lists", "These fill the dropdowns when you add or edit an item. Enter one per line.");
+		for (const key of ["categories", "accounts", "managers", "frequencies", "priorities"] as const) this.list(key);
+
+		this.heading("Display");
 
 		new Setting(containerEl)
 			.setName("Colour vision")
@@ -101,19 +168,28 @@ export class BudgetSettingTab extends PluginSettingTab {
 					}).open(),
 				),
 			);
+	}
 
-		for (const { key, name, desc } of LISTS) {
-			new Setting(containerEl)
-				.setName(name)
-				.setDesc(desc)
-				.setClass("budget-settings-list")
-				.addTextArea((t) =>
-					t.setValue(s[key].join("\n")).onChange(async (v) => {
-						const values = v.split("\n").map((x) => x.trim()).filter(Boolean);
-						s[key] = key === "currencies" ? values.map((x) => x.toUpperCase()) : values;
-						await this.plugin.saveSettings();
-					}),
-				);
-		}
+	private heading(name: string, desc?: string): void {
+		const h = new Setting(this.containerEl).setName(name).setHeading();
+		if (desc) h.setDesc(desc);
+	}
+
+	/** A one-per-line list. Sorted lists save in order as you type and re-order the text when you leave the box. */
+	private list(key: ListKey): void {
+		const s: BudgetSettings = this.plugin.settings;
+		const { name, desc } = LISTS[key];
+		new Setting(this.containerEl)
+			.setName(name)
+			.setDesc(desc)
+			.setClass("budget-settings-list")
+			.addTextArea((t) => {
+				t.setPlaceholder("One per line").setValue(s[key].join("\n"));
+				t.onChange(async (v) => {
+					s[key] = cleanList(key, v);
+					await this.save(key, name);
+				});
+				t.inputEl.addEventListener("blur", () => t.setValue(s[key].join("\n")));
+			});
 	}
 }

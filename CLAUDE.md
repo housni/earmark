@@ -20,6 +20,8 @@ Obsidian plugin for budget planning and tracking. Data lives in notes as YAML in
 
 ## Conventions
 - Mutate rows by `id` (items, transactions, credits), never by index.
+- Categories, accounts and managers are kept A–Z (`sortedList`, "Other" last; `SORTED_LISTS` in `config.ts`). Frequencies, priorities and currencies keep their typed order because it means something (priorities drive tiers/colours).
+- Settings that open views only read when drawing (`REDRAW` in `settings.ts`: currencies, priorities, locale, baseCurrency) show a one-time "reopen the note" notice when changed. Nothing needs a restart; add new settings to `REDRAW` if they behave that way.
 - Items carry `created`/`modified` ISO timestamps. Any change to an item sets `modified` (`saveItem` in BudgetView does it for budget items; snapshots get their own dates; refresh keeps `created`). Sorting lives in `sortItems` in `model.ts` (blanks last).
 - Filtering lives in `matchesFilter`/`ItemFilter` in `model.ts` (every item field). Views use the shared `views/FilterBar.ts`; when adding an item field, add it to the filter, `sortItems` and the FilterBar together.
 - Normalizers spread the raw object first so hand-added YAML keys survive saves; `toPlain` drops empty fields below top level.
