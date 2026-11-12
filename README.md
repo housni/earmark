@@ -2,6 +2,16 @@
 
 Earmark is an Obsidian plugin. Keep a catalog of budget items, build budgets from it, and track spending, credits and balances. Everything lives in your notes as YAML inside fenced code blocks.
 
+## Install
+
+Until Earmark is in the community plugin store, install it with [BRAT](https://github.com/TfTHacker/obsidian42-brat):
+
+1. Install and enable **BRAT** from Community plugins.
+2. Run **BRAT: Add a beta plugin for testing** and enter `housni/earmark`.
+3. Enable **Earmark** under Community plugins. BRAT keeps it updated as new releases come out.
+
+To install by hand instead, download `earmark-<version>.zip` from the [latest release](https://github.com/housni/earmark/releases/latest) and unzip it into `<vault>/.obsidian/plugins/`.
+
 ## Use
 
 1. **Open or create budget catalog** (command palette) creates `Budgets/_Catalog.md`. Click **Add item** to add rent, vet bills, visa fees and so on.
@@ -52,3 +62,14 @@ npm run build   # type-check + production build
 Symlink this folder into `<vault>/.obsidian/plugins/earmark/` and enable the plugin.
 
 See [TESTING.md](TESTING.md) for build options (including Docker), installing into a vault, and a step-by-step walkthrough of every feature with expected results.
+
+## Release
+
+CI runs the tests and the build on every push to `main` and on every pull request. To publish a release:
+
+```sh
+npm version patch   # or minor / major
+git push --follow-tags
+```
+
+`npm version` bumps `package.json`, `manifest.json` and `versions.json`, then commits and tags the new version (`0.1.1`, with no `v`). Pushing the tag runs the release workflow. It tests, builds, checks that the tag matches the manifest, and publishes a GitHub Release with `main.js`, `manifest.json`, `styles.css` and a zip of all three.
