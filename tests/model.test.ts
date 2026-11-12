@@ -197,6 +197,43 @@ describe("settings migration", () => {
 		expect(changed).toBe(true);
 	});
 
+	it("swaps untouched old default lists for the new defaults (v3)", () => {
+		// Exactly what an install saved before #12, already sorted by v2.
+		const { settings, changed } = migrateSettings({
+			settingsVersion: 2,
+			categories: ["Food", "Health", "Housing", "Immigration", "Pet", "Transport", "Utilities", "Other"],
+			accounts: ["Common", "Housni"],
+			managers: ["housni"],
+			baseCurrency: "KES",
+			colorVision: "mono",
+		});
+		expect(settings.categories).toEqual(DEFAULT_SETTINGS.categories);
+		expect(settings.accounts).toEqual(["Common", "Jane", "John"]);
+		expect(settings.managers).toEqual(["Jane", "John"]);
+		expect(settings.baseCurrency).toBe("KES");
+		expect(settings.colorVision).toBe("mono");
+		expect(changed).toBe(true);
+	});
+
+	it("keeps customised lists, even close to an old default", () => {
+		const { settings } = migrateSettings({
+			settingsVersion: 2,
+			categories: ["Food", "Health", "Housing", "Immigration", "Pet", "Transport", "Utilities", "Other", "Books"],
+			accounts: ["Common", "Housni", "Savings"],
+			managers: ["Housni", "Amina"],
+		});
+		expect(settings.categories).toContain("Books");
+		expect(settings.categories).toContain("Immigration");
+		expect(settings.accounts).toEqual(["Common", "Housni", "Savings"]);
+		expect(settings.managers).toEqual(["Housni", "Amina"]);
+	});
+
+	it("upgrades the very first defaults from before v1 too", () => {
+		const { settings } = migrateSettings({ accounts: ["Housni", "Nyambu", "Common"], managers: ["Housni", "Nyambu"] });
+		expect(settings.accounts).toEqual(["Common", "Jane", "John"]);
+		expect(settings.managers).toEqual(["Jane", "John"]);
+	});
+
 	it("ships default lists that are already in order", () => {
 		for (const key of ["categories", "accounts", "managers"] as const) {
 			expect(DEFAULT_SETTINGS[key]).toEqual(sortedList(DEFAULT_SETTINGS[key]));
@@ -214,12 +251,12 @@ describe("settings migration", () => {
 		const { settings, changed } = migrateSettings({ currencies: ["USD", "LKR"], baseCurrency: "LKR" });
 		expect(settings.currencies).toEqual(["USD", "LKR", "KES"]);
 		expect(settings.baseCurrency).toBe("LKR");
-		expect(settings.settingsVersion).toBe(2);
+		expect(settings.settingsVersion).toBe(3);
 		expect(changed).toBe(true);
 	});
 
 	it("respects removals made after migrating", () => {
-		const { settings, changed } = migrateSettings({ settingsVersion: 2, currencies: ["USD"] });
+		const { settings, changed } = migrateSettings({ settingsVersion: 3, currencies: ["USD"] });
 		expect(settings.currencies).toEqual(["USD"]);
 		expect(changed).toBe(false);
 	});
