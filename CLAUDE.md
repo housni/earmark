@@ -20,6 +20,7 @@ Obsidian plugin for budget planning and tracking. Data lives in notes as YAML in
 
 ## Conventions
 - Mutate rows by `id` (items, transactions, credits), never by index.
+- When changing a default list in `config.ts`, add the old one to `PREVIOUS_DEFAULTS` and a migration step, so installs that never customised it get the new default (see #12).
 - Categories, accounts and managers are kept A–Z (`sortedList`, "Other" last; `SORTED_LISTS` in `config.ts`). Frequencies, priorities and currencies keep their typed order because it means something (priorities drive tiers/colours).
 - Settings that open views only read when drawing (`REDRAW` in `settings.ts`: currencies, priorities, locale, baseCurrency) show a one-time "reopen the note" notice when changed. Nothing needs a restart; add new settings to `REDRAW` if they behave that way.
 - Items carry `created`/`modified` ISO timestamps. Any change to an item sets `modified` (`saveItem` in BudgetView does it for budget items; snapshots get their own dates; refresh keeps `created`). Sorting lives in `sortItems` in `model.ts` (blanks last).

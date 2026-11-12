@@ -75,7 +75,7 @@ The lists under **Lists** fill the dropdowns in the item form. Each one has a de
 | Frequencies | One-time, Weekly, Monthly, Quarterly, Yearly | as typed |
 | Priorities | High, Medium, Low | as typed, highest first |
 
-If you already had saved settings from an earlier version, your own lists are kept, but categories, accounts and managers are put into A–Z order once.
+**Upgrading an existing install:** a saved list that you never changed, i.e. one still identical to an older version's defaults, is replaced with the new default list once, the first time this version loads. For example, the old *Housing, Food, … Immigration, Health, Other* categories, or accounts *Housni, Common*. Lists you've customised are kept and only put into A–Z order. Other saved settings, such as your base currency or colour vision mode, are never touched.
 
 Check how the lists behave:
 - **Sorting**: add `Books` to the end of *Categories*, then click outside the box. The text re-orders: *Books* moves between *Charity/Donation* and *Debts*, and *Other* stays last. *Accounts* and *Managers* behave the same way. *Priorities* and *Frequencies* keep the order you type.
