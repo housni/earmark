@@ -23,9 +23,9 @@ export const DEFAULT_SETTINGS: BudgetSettings = {
 	currencies: ["USD", "EUR", "GBP"],
 	frequencies: ["One-time", "Weekly", "Monthly", "Quarterly", "Yearly"],
 	categories: ["Housing", "Food", "Transport", "Utilities", "Pet", "Immigration", "Health", "Other"],
-	accounts: ["Housni", "Nyambu", "Common"],
+	accounts: ["Housni", "Common"],
 	priorities: ["High", "Medium", "Low"],
-	managers: ["Housni", "Nyambu"],
+	managers: ["Housni"],
 };
 
 type ListKey = "currencies" | "frequencies" | "categories" | "accounts" | "priorities" | "managers";
