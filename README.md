@@ -2,6 +2,10 @@
 
 Earmark is an Obsidian plugin. Keep a catalog of budget items, build budgets from it, and track spending, credits and balances. Everything lives in your notes as YAML inside fenced code blocks.
 
+https://github.com/user-attachments/assets/1bd5a95f-8fc0-4af9-98cd-ca39544aceef
+
+*A quick tour of Earmark. It's an illustration of the plugin's screens, so the real interface may differ slightly. Generated from [`docs/demo`](docs/demo).*
+
 ## Install
 
 Until Earmark is in the community plugin store, install it with [BRAT](https://github.com/TfTHacker/obsidian42-brat):
